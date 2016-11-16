@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StaTypPocoQueries.Core.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StaTypPocoQueries.AsyncPoco", "StaTypPocoQueries.AsyncPoco\StaTypPocoQueries.AsyncPoco.csproj", "{F84B0695-E751-4964-83E4-FD224BE43398}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StaTypPocoQueries.AsyncPoco.Tests", "StaTypPocoQueries.AsyncPoco.Tests\StaTypPocoQueries.AsyncPoco.Tests.csproj", "{3AEE2828-0C40-4C46-90E5-5AC33585CC22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{F84B0695-E751-4964-83E4-FD224BE43398}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F84B0695-E751-4964-83E4-FD224BE43398}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F84B0695-E751-4964-83E4-FD224BE43398}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AEE2828-0C40-4C46-90E5-5AC33585CC22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AEE2828-0C40-4C46-90E5-5AC33585CC22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AEE2828-0C40-4C46-90E5-5AC33585CC22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AEE2828-0C40-4C46-90E5-5AC33585CC22}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
