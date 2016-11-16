@@ -1,0 +1,2 @@
+*.fs linguist-language=F#
+*.cs linguist-language=C#
