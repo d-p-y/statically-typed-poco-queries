@@ -5,7 +5,7 @@
     <version>1.0.0</version>
     <authors>Dominik Pytlewski</authors>
     <owners/>
-    <licenseUrl>https://github.com/d-p-y/stpq/blob/master/LICENSE.md</licenseUrl>
+    <licenseUrl>https://github.com/d-p-y/stpq/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/d-p-y/stpq</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Translates Linq Expressions to SQL 'where' clause. Makes it safer to work with "Poco ORM-ish thing" (PetaPoco, AsyncPoco etc). Generates sql and parameters to be passed to Database class methods such as Query, Single, Delete etc. Idea by: Tytusse (https://github.com/tytusse)</description>
