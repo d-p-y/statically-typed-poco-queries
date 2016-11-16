@@ -125,6 +125,18 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
         }
         
         [Fact]
+        public async void SimpleExistsTest() {
+            var inp = new SomeEntity {
+                AnInt = 5,
+                AString = "foo"
+            };
+
+            await _ap.InsertAsync(inp);
+            
+            Assert.True(await _ap.ExistsAsync<SomeEntity>(x => x.AString == "foo"));
+        }
+        
+        [Fact]
         public async void SimpleDeleteTest() {
             var inp1 = new SomeEntity {
                 AnInt = 5,

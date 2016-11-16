@@ -14,7 +14,7 @@ namespace StaTypPocoQueries.AsyncPoco {
         }
         
         public static Task<bool> ExistsAsync<T>(this Database self, Expression<Func<T, bool>> query) {
-            var translated = ExpressionToSql.Translate(query);
+            var translated = ExpressionToSql.Translate(query, false);
             return self.ExistsAsync<T>(translated.Item1, translated.Item2);
         }
 

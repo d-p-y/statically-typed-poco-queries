@@ -110,6 +110,9 @@ module Translator =
         | _ -> failwithf "conditions has unexpected type %A" body
 
 type ExpressionToSql = 
-    static member Translate<'T> (conditions:Expression<Func<'T, bool>>) =
+    static member Translate<'T>(conditions:Expression<Func<'T, bool>>, includeWhere) =
         let sql, parms = Translator.comparisonToWhereClause conditions.Body None List.empty
-        new Tuple<_,_>("where " + sql, parms |> List.rev |> Array.ofList)
+        let where = if includeWhere then "where " else ""
+        new Tuple<_,_>(where + sql, parms |> List.rev |> Array.ofList)
+
+    static member Translate(conditions) = ExpressionToSql.Translate(conditions, true)
