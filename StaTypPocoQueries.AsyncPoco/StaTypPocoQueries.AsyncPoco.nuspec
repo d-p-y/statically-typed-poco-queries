@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>StaTypPocoQueries.AsyncPoco</id>
+    <version>1.0.0</version>
+    <authors>Dominik Pytlewski</authors>
+    <owners/>
+    <licenseUrl>https://github.com/d-p-y/stpq/blob/master/LICENSE.md</licenseUrl>
+    <projectUrl>https://github.com/d-p-y/stpq</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>AsyncPoco bindings for StaTypPocoQueries. It translates Linq Expressions to SQL 'where' clause. Makes it safer to work with AsyncPoco. Generates sql and parameters to be passed to Database class methods such as Query, Single, Delete etc. Idea by: Tytusse (https://github.com/tytusse)</description>
+    <copyright>Copyright 2016</copyright>
+    <tags>strong strongly type typed query poco petapoco linq expression translator</tags>
+    <dependencies>
+      <dependency id="FSharp.Core" version="4.0.0.1" />
+	  <dependency id="StaTypPocoQueries.Core" version="1.0.0" />
+	  <dependency id="AsyncPoco" version="1.2.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin/Release/StaTypPocoQueries.AsyncPoco.dll" target="lib/net40/StaTypPocoQueries.AsyncPoco.dll" />
+    <file src="bin/Release/StaTypPocoQueries.AsyncPoco.pdb" target="lib/net40/StaTypPocoQueries.AsyncPoco.pdb" />
+  </files>
+</package>
