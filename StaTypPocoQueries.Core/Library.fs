@@ -27,13 +27,13 @@ module Translator =
         | _ -> sprintf "unsupported nodetype %A" body|> failwith    
 
     let leafExpression (body:BinaryExpression) sqlOperator curParams =
-        let lNull, lVal, lParam = constantOrMemberAccessValue body.Left curParams
+        let _, lVal, lParam = constantOrMemberAccessValue body.Left curParams
         let rNull, rVal, rParam = constantOrMemberAccessValue body.Right curParams
-                
+
         let oper = 
             match (rNull, body.NodeType) with
-            | true, ExpressionType.NotEqual -> " is "
-            | true, ExpressionType.Equal -> " is not "
+            | true, ExpressionType.NotEqual -> " is not "
+            | true, ExpressionType.Equal -> " is "
             | false, _ -> sprintf " %s " sqlOperator
             | _ -> sprintf "unsupported nodetype %A" body |> failwith
 
