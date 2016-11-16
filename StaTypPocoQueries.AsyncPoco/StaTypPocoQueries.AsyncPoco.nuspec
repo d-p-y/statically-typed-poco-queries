@@ -2,6 +2,7 @@
 <package >
   <metadata>
     <id>StaTypPocoQueries.AsyncPoco</id>
+	<title>Statically Typed Poco Queries - AsyncPoco bindings</title>
     <version>1.0.0</version>
     <authors>Dominik Pytlewski</authors>
     <owners/>

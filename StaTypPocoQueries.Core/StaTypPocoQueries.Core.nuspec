@@ -2,6 +2,7 @@
 <package >
   <metadata>
     <id>StaTypPocoQueries.Core</id>
+	<title>Statically Typed Poco Queries - Core</title>
     <version>1.0.0</version>
     <authors>Dominik Pytlewski</authors>
     <owners/>
