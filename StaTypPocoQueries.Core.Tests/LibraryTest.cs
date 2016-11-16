@@ -61,6 +61,34 @@ namespace StaTypPocoQueries.Core.Tests {
             AreEqual("where nullableBool = @0", new object[] {(bool?)true},
                 ExpressionToSql.Translate<SomeEntity>(x => x.nullableBool == true));            
         }
+        
+        [Fact]
+        public void TestEqualsNullableIsNull() {            
+            AreEqual("where nullableInt is null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableInt == null));
+            AreEqual("where nullableDecimal is null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableDecimal == null));
+            AreEqual("where nullableLong is null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableLong == null));
+            AreEqual("where nullableDate is null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableDate == null));
+            AreEqual("where nullableBool is null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableBool == null));            
+        }
+
+        [Fact]
+        public void TestEqualsNullableIsNotNull() {            
+            AreEqual("where nullableInt is not null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableInt != null));
+            AreEqual("where nullableDecimal is not null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableDecimal != null));
+            AreEqual("where nullableLong is not null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableLong != null));
+            AreEqual("where nullableDate is not null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableDate != null));
+            AreEqual("where nullableBool is not null", 
+                ExpressionToSql.Translate<SomeEntity>(x => x.nullableBool != null));            
+        }
 
         [Fact]
         public void TestEqualsNonNullLiteral() {
