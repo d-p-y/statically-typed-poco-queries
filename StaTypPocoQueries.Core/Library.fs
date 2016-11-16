@@ -23,8 +23,8 @@ module Translator =
                 let v = Expression.Lambda<Func<obj>>(unaryExpr).Compile()
                 literalToSql (v.Invoke ()) curParams
             |"RuntimePropertyInfo" -> false, body.Member.Name, None
-            |_ as name -> sprintf "unsupported member type name %s" name |> failwith    
-        | _ -> sprintf "unsupported nodetype %A" body|> failwith    
+            |_ as name -> failwithf "unsupported member type name %s" name   
+        | _ -> failwithf "unsupported nodetype %A" body   
 
     let leafExpression (body:BinaryExpression) sqlOperator curParams =
         let _, lVal, lParam = constantOrMemberAccessValue body.Left curParams
@@ -35,7 +35,7 @@ module Translator =
             | true, ExpressionType.NotEqual -> " is not "
             | true, ExpressionType.Equal -> " is "
             | false, _ -> sprintf " %s " sqlOperator
-            | _ -> sprintf "unsupported nodetype %A" body |> failwith
+            | _ -> failwithf "unsupported nodetype %A" body
 
         lVal + oper + rVal,
         match lParam,rParam with
@@ -75,7 +75,7 @@ module Translator =
         | :? UnaryExpression as body when body.NodeType = ExpressionType.Not && body.Type = typeof<System.Boolean> ->
             match body.Operand with
             | :? MemberExpression as body -> boolValueToWhereClause body curSqlParams false
-            | _ -> sprintf "not condition has unexpected type %A" body |> failwith
+            | _ -> failwithf "not condition has unexpected type %A" body
         | :? MemberExpression as body when body.NodeType = ExpressionType.MemberAccess && body.Type = typeof<System.Boolean> ->
             boolValueToWhereClause body curSqlParams true
         | :? BinaryExpression as body -> 
@@ -90,7 +90,7 @@ module Translator =
                             let sql = sql |> sqlInBracketsIfNeeded parentJunction junctionSql
                             sql, parms
                         | None, Some sqlOper -> leafExpression expr sqlOper curSqlParams
-                        | _ -> "expression is not a junction and not a supported leaf" |> failwith
+                        | _ -> failwith "expression is not a junction and not a supported leaf"
                     | _ -> comparisonToWhereClause expr parentJunction curSqlParams
 
                 let lSql, curSqlParams = consumeExpr body.Left curSqlParams
@@ -106,8 +106,8 @@ module Translator =
             | None -> 
                 match binExpToSqlOper body with
                 | Some sqlOper -> leafExpression body sqlOper curSqlParams
-                | None -> sprintf "unsupported operator %A in leaf" body.NodeType |> failwith
-        | _ -> sprintf "conditions has unexpected type %A" body |> failwith
+                | None -> failwithf "unsupported operator %A in leaf" body.NodeType
+        | _ -> failwithf "conditions has unexpected type %A" body
 
 type ExpressionToSql = 
     static member Translate<'T> (conditions:Expression<Func<'T, bool>>) =
