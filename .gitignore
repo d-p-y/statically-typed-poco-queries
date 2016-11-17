@@ -7,3 +7,4 @@ obj/
 *.nupkg
 .vs
 *.user
+runGitVersionPropagate.bat
