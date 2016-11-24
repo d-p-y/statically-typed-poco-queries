@@ -1,143 +1,120 @@
-﻿using System.Collections.Generic;
-using System.Data.SQLite;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
 using Xunit;
 using AsyncPoco;
+using DisposableSoftwareContainer;
+using Microsoft.FSharp.Core;
+using Xunit.Abstractions;
 
 namespace StaTypPocoQueries.AsyncPoco.Tests {
-
-    /// <summary>
-    /// Persisted objects are compared by id (comparison "by" reference). 
-    /// Non persisted are value objects and thus its equalities of its properties is checked.
-    /// </summary>
-    [TableName("SomeEntity")]
-	[PrimaryKey("id")]
-	[ExplicitColumns] 
-    class SomeEntity {
-        [Column] public int Id { get; set; }
-        [Column] public int AnInt { get; set; }
-        [Column] public string AString { get; set; }
-        [Column] public int? NullableInt { get; set; }
-
-        public override int GetHashCode() {
-            if (Id != 0) {
-                return Id.GetHashCode();
-            }
-            
-            return AnInt.GetHashCode() + 
-                (AString?.GetHashCode() ?? 0) + 
-                (NullableInt?.GetHashCode() ?? 0); 
-        }
-
-        public override bool Equals(object rawOther) {
-            if (!(rawOther is SomeEntity)) {
-                return false;
-            }
-            var oth = (SomeEntity)rawOther;
-
-            if (oth.Id != 0 && Id != 0) {
-                //both are persisted
-                return oth.Id == Id; 
-            }
-
-            if (oth.Id != 0 || Id != 0) {
-                //only one persisted
-                return false;
-            }
-
-            //none persisted yet
-            return 
-                oth.AString == AString && 
-                oth.AnInt == AnInt && 
-                oth.NullableInt == NullableInt;
-        }
-    }
-    
     public class AsyncPocoWrapperTest {
-        private readonly SQLiteConnection _db = new SQLiteConnection("Data Source=:memory:");
-        private readonly Database _ap;
-        private static string SqlCreateTestTable = @"
-            create table SomeEntity (
-                id integer primary key autoincrement not null,
-                anInt int not null, 
-                aString varchar(50) null, 
-                nullableInt int null
-            )";
+        private readonly Action<string> _logger;
 
-        public AsyncPocoWrapperTest() {
-            _db.Open();
+        public AsyncPocoWrapperTest(ITestOutputHelper hlp) {
+            _logger = hlp.WriteLine;
+        }
 
-            using (var cmd = new SQLiteCommand(SqlCreateTestTable, _db)) {
-                cmd.ExecuteNonQuery();
-            }
+        // ReSharper disable once UnusedMethodReturnValue.Local: it is used in MemberData
+        private static object[] DbProviders() {
+            return new object[] {
+                new object[] {new SqlServerInDockerRunner()},
+                new object[] {new SqliteRunner()}
+            };
+        }
 
-            _ap = new Database(_db);
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void FetchNothingWorksTest(IRunner runner) {
+            await runner.Run(_logger, async db => {
+                var outp = await db.FetchAsync<SomeEntity>(x => x.AString == "foo");
+                Assert.Equal(new List<SomeEntity>(), outp);
+            });
         }
         
-        [Fact]
-        public async void SimpleInsertTest() {
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void SimpleInsertTest(IRunner runner) {
+            var inp = new SomeEntity {
+                AnInt = 5,
+                AString = "foo"
+            };
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
+                Assert.Equal(1, await db.ExecuteScalarAsync<int>("select count(*) from SomeEntity"));
+                Assert.NotEqual(0, inp.Id);
+            });
+        }
+
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void SimpleSingleTest(IRunner runner) {
             var inp = new SomeEntity {
                 AnInt = 5,
                 AString = "foo"
             };
 
-            await _ap.InsertAsync(inp);
-            Assert.Equal(1, await _ap.ExecuteScalarAsync<int>("select count(*) from SomeEntity"));
-            Assert.NotEqual(0, inp.Id);
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
+        
+                var outp = await db.SingleAsync<SomeEntity>(x => x.AString == "foo");
+                Assert.Equal(inp, outp);
+            });
         }
-
-        [Fact]
-        public async void SimpleSingleTest() {
+        
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void IsNullSingleTest(IRunner runner) {
             var inp = new SomeEntity {
                 AnInt = 5,
                 AString = "foo"
             };
 
-            await _ap.InsertAsync(inp);
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
         
-            var outp = await _ap.SingleAsync<SomeEntity>(x => x.AString == "foo");
-            Assert.Equal(inp, outp);
+                var outp = await db.SingleAsync<SomeEntity>(x => x.NullableInt == null);
+                Assert.Equal(inp, outp);
+            });
         }
-        
-        [Fact]
-        public async void IsNullSingleTest() {
+
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void SimpleFetchTest(IRunner runner) {
             var inp = new SomeEntity {
                 AnInt = 5,
                 AString = "foo"
             };
 
-            await _ap.InsertAsync(inp);
-        
-            var outp = await _ap.SingleAsync<SomeEntity>(x => x.NullableInt == null);
-            Assert.Equal(inp, outp);
-        }
-
-        [Fact]
-        public async void SimpleFetchTest() {
-            var inp = new SomeEntity {
-                AnInt = 5,
-                AString = "foo"
-            };
-
-            await _ap.InsertAsync(inp);
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
             
-            var outp = await _ap.FetchAsync<SomeEntity>(x => x.AString == "foo");
-            Assert.Equal(new List<SomeEntity> {inp}, outp);
+                var outp = await db.FetchAsync<SomeEntity>(x => x.AString == "foo");
+                Assert.Equal(new List<SomeEntity> {inp}, outp);
+            });
         }
         
-        [Fact]
-        public async void SimpleExistsTest() {
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void SimpleExistsTest(IRunner runner) {
             var inp = new SomeEntity {
                 AnInt = 5,
                 AString = "foo"
             };
 
-            await _ap.InsertAsync(inp);
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
             
-            Assert.True(await _ap.ExistsAsync<SomeEntity>(x => x.AString == "foo"));
+                Assert.True(await db.ExistsAsync<SomeEntity>(x => x.AString == "foo"));
+            });
         }
         
-        [Fact]
-        public async void SimpleDeleteTest() {
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void SimpleDeleteTest(IRunner runner) {
             var inp1 = new SomeEntity {
                 AnInt = 5,
                 AString = "foo1"
@@ -148,12 +125,14 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
                 AString = "foo2"
             };
 
-            await _ap.InsertAsync(inp1);
-            await _ap.InsertAsync(inp2);
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp1);
+                await db.InsertAsync(inp2);
 
-            var outp = await _ap.DeleteAsync<SomeEntity>(x => x.AString == "foo1");
-            Assert.Equal(1, outp);
-            Assert.Equal(inp2, await _ap.SingleAsync<SomeEntity>(x => x.AnInt == 5));
+                var outp = await db.DeleteAsync<SomeEntity>(x => x.AString == "foo1");
+                Assert.Equal(1, outp);
+                Assert.Equal(inp2, await db.SingleAsync<SomeEntity>(x => x.AnInt == 5));
+            });
         }
     }
 }
