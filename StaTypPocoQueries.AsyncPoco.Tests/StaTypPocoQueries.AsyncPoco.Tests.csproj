@@ -78,6 +78,7 @@
     <Compile Include="AsyncPocoWrapperTest.cs" />
     <Compile Include="IRunner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpecialEntity.cs" />
     <Compile Include="SomeEntity.cs" />
     <Compile Include="SqliteRunner.cs" />
     <Compile Include="SqlServerInDockerRunner.cs" />

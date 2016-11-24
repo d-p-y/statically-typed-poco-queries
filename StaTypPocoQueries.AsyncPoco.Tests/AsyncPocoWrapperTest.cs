@@ -67,6 +67,23 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
         
         [Theory]
         [MemberData(nameof(DbProviders))]
+        public async void NeedsQuotingSingleTest(IRunner runner) {
+            var inp = new SpecialEntity {
+                Table = 5,
+                Create = "foo",
+                Null = 3
+            };
+
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
+        
+                var outp = await db.SingleAsync<SpecialEntity>(x => x.Create == "foo" || x.Null == 3 || x.Table == 5);
+                Assert.Equal(inp, outp);
+            });
+        }
+
+        [Theory]
+        [MemberData(nameof(DbProviders))]
         public async void IsNullSingleTest(IRunner runner) {
             var inp = new SomeEntity {
                 AnInt = 5,

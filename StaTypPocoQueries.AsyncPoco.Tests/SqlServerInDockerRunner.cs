@@ -22,15 +22,21 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
         private static string DllsPath {get; } =
             Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
         
-        private static string SqlCreateTestTable = @"
-            create table SomeEntity (
+        private static string[] SqlCreateTestTable = {
+            @"create table SomeEntity (
                 id integer IDENTITY(1,1) not null,
                 anInt int not null, 
                 aString nvarchar(50) null, 
                 nullableInt int null,
 
-	            CONSTRAINT PK_SomeEntity PRIMARY KEY CLUSTERED (id)
-            )";
+	            CONSTRAINT PK_SomeEntity PRIMARY KEY CLUSTERED (id))",
+            @"create table SpecialEntity (
+                id integer IDENTITY(1,1) not null,
+                [table] int not null, 
+                [create] nvarchar(50) null, 
+                [null] int null,
+
+	            CONSTRAINT PK_SpecialEntity PRIMARY KEY CLUSTERED (id))"};
         
         public async Task Run(Action<string> logger, Func<Database,Task> testBody) {
             var fsLog = FSharpOption<Action<string>>.Some(logger);
@@ -54,7 +60,8 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
                 
                 ExecuteNonQuery(sqlConn, $"create database {DbName}");
                 ExecuteNonQuery(sqlConn, $"use {DbName}");
-                ExecuteNonQuery(sqlConn, SqlCreateTestTable);
+
+                Array.ForEach(SqlCreateTestTable, x => ExecuteNonQuery(sqlConn, x));
                 
                 using (var asyncPocoDb = new Database(sqlConn)) {
                     await testBody(asyncPocoDb);
