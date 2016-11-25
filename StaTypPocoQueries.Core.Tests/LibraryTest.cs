@@ -1,4 +1,6 @@
-﻿using System;
+﻿//Copyright © 2016 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
+
+using System;
 using System.Collections.Generic;
 using Xunit;
 
