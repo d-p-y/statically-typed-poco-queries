@@ -3,7 +3,7 @@
   <metadata>
     <id>StaTypPocoQueries.Core</id>
 	<title>Statically Typed Poco Queries - Core</title>
-    <version>1.2.0.0</version>
+    <version>1.3.0.0</version>
     <authors>Dominik Pytlewski</authors>
     <owners/>
     <licenseUrl>https://github.com/d-p-y/stpq/blob/master/LICENSE</licenseUrl>
