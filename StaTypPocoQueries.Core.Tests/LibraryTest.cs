@@ -53,6 +53,22 @@ namespace StaTypPocoQueries.Core.Tests {
         }
           
         [Fact]
+        public void TestGreaterSmaller() {
+            var aVar = 5;
+            AreEqual("where <anInt> >= @0", new object[] {5}, 
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => x.anInt >= aVar));
+            
+            AreEqual("where <anInt> <= @0", new object[] {5}, 
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => x.anInt <= aVar));
+            
+            AreEqual("where <anInt> > @0", new object[] {5}, 
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => x.anInt > aVar));
+            
+            AreEqual("where <anInt> < @0", new object[] {5}, 
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => x.anInt < aVar));
+        }
+
+        [Fact]
         public void TestEqualsNonNullBoolLiteral() {
             AreEqual("where <aBool> = @0", new object[] {false}, 
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !x.aBool));
