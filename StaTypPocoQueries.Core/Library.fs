@@ -12,13 +12,22 @@ module Translator =
     type SqlDialect =
     |SqlServer
     |Sqlite
+    |Postgresql
+    |MySql
+    |Oracle
     with
         member this.Quoter 
             with get() =
                 match this with
                 |SqlServer -> {new IQuoter with member __.QuoteColumn x = sprintf "[%s]" x}
                 |Sqlite -> {new IQuoter with member __.QuoteColumn x = sprintf "`%s`" x}
-            
+                |Postgresql -> //https://www.postgresql.org/docs/8.2/static/sql-syntax-lexical.html
+                    {new IQuoter with member __.QuoteColumn x = sprintf "\"%s\"" x} 
+                |MySql -> //https://dev.mysql.com/doc/refman/5.5/en/keywords.html
+                    {new IQuoter with member __.QuoteColumn x = sprintf "`%s`" x} 
+                |Oracle -> //https://docs.oracle.com/database/121/SQLRF/sql_elements008.htm#SQLRF51129
+                    {new IQuoter with member __.QuoteColumn x = sprintf "\"%s\"" x}
+
     let literalToSql (v:obj) (curParams:_ list) =
         match v with
         | null | :? DBNull -> true, "null", None

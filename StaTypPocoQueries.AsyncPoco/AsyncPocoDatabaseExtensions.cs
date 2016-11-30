@@ -15,9 +15,23 @@ namespace StaTypPocoQueries.AsyncPoco {
 
             if (type.Contains("SQLiteConnection")) {
                 return Translator.SqlDialect.Sqlite;
-            } else if (type.Contains("System.Data.SqlClient")) {
+            }
+            if (type.Contains("System.Data.SqlClient")) {
                 return Translator.SqlDialect.SqlServer;    
             }
+            if (type.Contains("NpgsqlConnection")) {
+                //according to https://github.com/npgsql/npgsql/blob/dev/src/Npgsql/NpgsqlConnection.cs
+                return Translator.SqlDialect.Postgresql;
+            }
+            if (type.Contains(".MySql")) {
+                //according to https://dev.mysql.com/doc/connector-net/en/connector-net-programming-connecting-open.html
+                return Translator.SqlDialect.MySql;
+            }
+            if (type.Contains(".Oracle")) {
+                //according to http://www.oracle.com/webfolder/technetwork/tutorials/obe/db/hol08/dotnet/getstarted-c/getstarted_c_otn.htm
+                return Translator.SqlDialect.Oracle;
+            }
+            
             throw new Exception($"unsupported dialect for db: {type}");
         }
         
