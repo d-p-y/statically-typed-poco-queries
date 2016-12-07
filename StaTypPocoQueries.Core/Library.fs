@@ -4,6 +4,7 @@ namespace StaTypPocoQueries.Core
 
 open System
 open System.Linq.Expressions
+open Microsoft.FSharp.Linq.RuntimeHelpers
 
 module Translator = 
     type IQuoter =
@@ -133,10 +134,26 @@ module Translator =
                 | None -> failwithf "unsupported operator %A in leaf" body.NodeType
         | _ -> failwithf "conditions has unexpected type %A" body
 
+module LinqHelpers =
+    //thanks Daniel
+    //http://stackoverflow.com/questions/9134475/expressionfunct-bool-from-a-f-func
+    let conv<'T> (quot:Microsoft.FSharp.Quotations.Expr<'T -> bool>) =
+        let linq = quot |> LeafExpressionConverter.QuotationToExpression 
+        let call = linq :?> MethodCallExpression
+        let lambda = call.Arguments.[0] :?> LambdaExpression
+        Expression.Lambda<Func<'T, bool>>(lambda.Body, lambda.Parameters)
+        
 type ExpressionToSql = 
-    static member Translate<'T>(quoter,conditions:Expression<Func<'T, bool>>, includeWhere) =
+    static member Translate<'T>(quoter, conditions:Expression<Func<'T, bool>>, includeWhere) =
         let sql, parms = Translator.comparisonToWhereClause quoter conditions.Body None List.empty
         let where = if includeWhere then "where " else ""
         new Tuple<_,_>(where + sql, parms |> List.rev |> Array.ofList)
-    static member Translate(quoter,conditions) = ExpressionToSql.Translate(quoter,conditions, true)
-    static member Translate(dialect:Translator.SqlDialect,conditions) = ExpressionToSql.Translate(dialect.Quoter,conditions, true)
+
+    static member Translate(quoter:Translator.IQuoter, conditions:Quotations.Expr<(_ -> bool)>, includeWhere) = 
+        ExpressionToSql.Translate(quoter, LinqHelpers.conv conditions, includeWhere)
+                
+    static member Translate(quoter:Translator.IQuoter,conditions) = 
+        ExpressionToSql.Translate(quoter, LinqHelpers.conv conditions, true)
+
+    static member Translate(quoter:Translator.IQuoter,conditions:Expression<Func<'T, bool>>) = 
+        ExpressionToSql.Translate(quoter, conditions, true)
