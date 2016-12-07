@@ -69,6 +69,8 @@ I think so. There are plenty of tests for both the [translator](https://github.c
 
 * Database support  
   Supported and tested are Sql Server and Sqlite. Supported but not tested are: Postgresql, Mysql and Oracle.
+* Language support  
+  Both C&#35; and F&#35; is supported. More specifically translation is possible for System.Linq.Expressions and Microsoft.FSharp.Quotations
 * Quoting of reserved names such as 'table'  
   All column names are quoted to avoid usgae of special names. Internally database dialect is infered from database connection class and proper quoting mechanism is choosen.
 * Parameters in queries can be constants, nullable variables, not nullable properties  
