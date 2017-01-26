@@ -43,11 +43,11 @@ module Translator =
             constantOrMemberAccessValue quote body.Operand curParams
         | ExpressionType.MemberAccess, (:? MemberExpression as body) -> 
             match body.Member.GetType().Name with
-            |"RtFieldInfo" -> 
+            |"RtFieldInfo"|"MonoField" -> 
                 let unaryExpr = Expression.Convert(body, typeof<obj>)
                 let v = Expression.Lambda<Func<obj>>(unaryExpr).Compile()
                 literalToSql (v.Invoke ()) curParams
-            |"RuntimePropertyInfo" -> false, quote.QuoteColumn body.Member.Name, None
+            |"RuntimePropertyInfo"|"MonoProperty" -> false, quote.QuoteColumn body.Member.Name, None
             |_ as name -> failwithf "unsupported member type name %s" name   
         | _ -> failwithf "unsupported nodetype %A" body   
 
