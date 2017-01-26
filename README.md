@@ -2,7 +2,8 @@
 
 # What is this?
 
-It is a library providing ability to query "Poco family of ORMish things" using statically typed queries. Strictly speaking ```StaTypPocoQueries.Core``` is a translator of Linq Expressions into sql text query and its bound parameters. ```StaTypPocoQueries.AsyncPoco``` provides extensions to [AsyncPoco](https://github.com/tmenier/AsyncPoco) ```AsyncPoco.Database``` class so that queries become available 'natively'. It is possible to use ```StaTypPocoQueries.Core``` to provide extensions to other Poco libraries such as [PetaPoco](https://github.com/CollaboratingPlatypus/PetaPoco)
+It is a library providing ability to query "Poco family of ORMish things" using statically typed queries. Strictly speaking ```StaTypPocoQueries.Core``` is a translator of Linq Expressions into sql text query and its bound parameters. ```StaTypPocoQueries.AsyncPoco``` provides extensions to [AsyncPoco](https://github.com/tmenier/AsyncPoco) ```AsyncPoco.Database``` class so that queries become available 'natively'. It is possible to use ```StaTypPocoQueries.Core``` to provide extensions to other Poco libraries such as [PetaPoco](https://github.com/CollaboratingPlatypus/PetaPoco).
+Idea by: Tytusse (https://github.com/tytusse)
 
 Given one has following entity defined:
 ```csharp
@@ -61,7 +62,7 @@ Install-Package StaTypPocoQueries.AsyncPoco
 
 # Is it stable?
 
-I think so. There are plenty of tests for both the [translator](https://github.com/d-p-y/stpq/tree/master/StaTypPocoQueries.Core.Tests) and for [AsyncPoco wrapper](https://github.com/d-p-y/stpq/tree/master/StaTypPocoQueries.AsyncPoco.Tests) using Sqlite and containerized Sql Server.
+I think so. There are plenty of tests for both the [translator](https://github.com/d-p-y/statically-typed-poco-queries/tree/master/StaTypPocoQueries.Core.Tests) and for [AsyncPoco wrapper](https://github.com/d-p-y/statically-typed-poco-queries/tree/master/StaTypPocoQueries.AsyncPoco.Tests) using Sqlite and containerized Sql Server.
 
 # Features (which constructs are supported?)
 
@@ -69,6 +70,9 @@ I think so. There are plenty of tests for both the [translator](https://github.c
 
 * Database support  
   Supported and tested are Sql Server and Sqlite. Supported but not tested are: Postgresql, Mysql and Oracle.
+* .NET version support (tested)  
+  - .NET Framework 4.5.2 under Windows 7  
+  - Mono 4.2.1 under Ubuntu 16.04
 * Language support  
   Both C&#35; and F&#35; is supported. More specifically translation is possible for System.Linq.Expressions and Microsoft.FSharp.Quotations
 * Quoting of reserved names such as 'table'  
