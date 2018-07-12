@@ -1,4 +1,4 @@
-﻿//Copyright © 2016 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
+﻿//Copyright © 2018 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
 
 using System;
 using System.Collections.Generic;
@@ -21,8 +21,8 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
         }
 
         // ReSharper disable once UnusedMethodReturnValue.Local: it is used in MemberData
-        private static object[] DbProviders() {
-            return new object[] {
+        public static IEnumerable<object[]> DbProviders() {
+            return new [] {
                 new object[] {new SqlServerInDockerRunner()},
                 new object[] {new SqliteRunner()}
             };

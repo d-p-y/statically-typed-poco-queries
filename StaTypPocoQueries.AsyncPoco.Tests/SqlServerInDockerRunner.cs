@@ -1,4 +1,4 @@
-﻿//Copyright © 2016 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
+﻿//Copyright © 2018 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
 
 using System;
 using System.Collections.Generic;
@@ -43,7 +43,7 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
         public async Task Run(Action<string> logger, Func<Database,Task> testBody) {
             var fsLog = FSharpOption<Action<string>>.Some(logger);
             
-            var dockerFileFolder = Path.Combine(DllsPath, @"..\..\SqlServerInDocker");
+            var dockerFileFolder = Path.Combine(DllsPath, @"..\..\..\SqlServerInDocker");
             const string saPasswd = "somePASSWD12345"; //present in build.args file
             const int serverPort = 1433;
 
