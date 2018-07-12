@@ -6,6 +6,6 @@ FROM microsoft/mssql-server-linux
 RUN apt update && apt install -y python sudo
 ARG SQLSERVERPASSWD
 ENV SA_PASSWORD=$SQLSERVERPASSWD
-RUN /opt/mssql/bin/sqlservr-setup --accept-eula --set-sa-password
+ENV ACCEPT_EULA=Y
 
 ENTRYPOINT /opt/mssql/bin/sqlservr
