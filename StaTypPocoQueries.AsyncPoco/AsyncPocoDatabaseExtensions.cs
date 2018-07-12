@@ -1,4 +1,4 @@
-﻿//Copyright © 2016 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
+﻿//Copyright © 2018 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace StaTypPocoQueries.AsyncPoco {
         private static Translator.SqlDialect GetDialect(Database db) {
             var type = db.Connection.GetType().FullName;
 
-            if (type.Contains("SQLiteConnection")) {
+            if (type.ToLower().Contains("sqliteconnection")) {
                 return Translator.SqlDialect.Sqlite;
             }
             if (type.Contains("System.Data.SqlClient")) {

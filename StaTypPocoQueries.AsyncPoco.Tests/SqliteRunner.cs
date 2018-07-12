@@ -1,8 +1,8 @@
-﻿//Copyright © 2016 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
+﻿//Copyright © 2018 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
 
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,17 +24,24 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
 	            )" };
         
         public async Task Run(Action<string> logger, Func<Database,Task> testBody) {
-            using (SQLiteConnection db = new SQLiteConnection("Data Source=:memory:")) {
+            using (var db = new SqliteConnection("Data Source=:memory:")) {
                 db.Open();
 
                 Array.ForEach(SqlCreateTestTable, x=> {
-                    using (var cmd = new SQLiteCommand(x, db)) {
+                    using (var cmd = db.CreateCommand()) {
+                        cmd.CommandText = x;
                         cmd.ExecuteNonQuery();
                     }
                 });
                 
                 var asyncPocoDb = new Database(db);
-                await testBody(asyncPocoDb);
+                try {
+                    await testBody(asyncPocoDb);
+                } catch(Exception ex) {
+                    logger($"got exception {ex}");
+                    logger($"last sql: {asyncPocoDb.LastSQL}");
+                    throw;
+                }
             }        
         }
     }
