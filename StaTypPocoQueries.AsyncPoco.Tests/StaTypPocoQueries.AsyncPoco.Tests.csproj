@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DisposableSoftwareContainer.Docker, Version=1.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DisposableSoftwareContainer.Docker.1.1.1\lib\net451\DisposableSoftwareContainer.Docker.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -43,9 +47,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="AsyncPoco, Version=1.2.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\packages\AsyncPoco.1.2.0\lib\net45\AsyncPoco.dll</HintPath>
-    </Reference>
-    <Reference Include="DisposableDockerContainer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\DisposableSoftwareContainer.Docker.1.0.0\lib\net40\DisposableDockerContainer.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Core, Version=4.4.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>..\packages\FSharp.Core.4.0.0.1\lib\net40\FSharp.Core.dll</HintPath>

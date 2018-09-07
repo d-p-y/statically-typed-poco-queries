@@ -8,8 +8,10 @@ using AsyncPoco;
 using StaTypPocoQueries.Core;
 using Microsoft.FSharp.Quotations;
 using Microsoft.FSharp.Core;
+using static StaTypPocoQueries.Core.Translator;
 
 namespace StaTypPocoQueries.AsyncPoco {
+
     public static class AsyncPocoDatabaseExtensions {
 
         private static Translator.SqlDialect GetDialect(Database db) {
@@ -66,7 +68,21 @@ namespace StaTypPocoQueries.AsyncPoco {
             var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query);
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
         }
+        
+        public static Task<List<T>> FetchAsync<T>(
+                this Database self, ConjunctionWord wrd, params Expression<Func<T, bool>>[] queries) {
 
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, wrd, queries);
+            return self.FetchAsync<T>(translated.Item1, translated.Item2);
+        }
+        
+        public static Task<List<T>> FetchAsync<T>(
+                this Database self, ConjunctionWord wrd, params FSharpExpr<FSharpFunc<T, bool>>[] queries) {
+
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, wrd, queries);
+            return self.FetchAsync<T>(translated.Item1, translated.Item2);
+        }
+        
         public static Task<T> FirstAsync<T>(this Database self, Expression<Func<T, bool>> query) {
             var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query);
             return self.FirstAsync<T>(translated.Item1, translated.Item2);

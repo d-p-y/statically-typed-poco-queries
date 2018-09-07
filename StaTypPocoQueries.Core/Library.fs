@@ -10,6 +10,16 @@ module Translator =
     type IQuoter =
         abstract member QuoteColumn: columnName:string-> string
 
+    type ConjunctionWord =
+    |And=1
+    |Or=2
+
+    let conjunctionWordAsSql x =
+        match x with
+        |ConjunctionWord.And -> " and "
+        |ConjunctionWord.Or -> " or "
+        |_ -> failwith "unsupported ConjunctionWord"
+
     type SqlDialect =
     |SqlServer
     |Sqlite
@@ -144,16 +154,54 @@ module LinqHelpers =
         Expression.Lambda<Func<'T, bool>>(lambda.Body, lambda.Parameters)
         
 type ExpressionToSql = 
-    static member Translate<'T>(quoter, conditions:Expression<Func<'T, bool>>, includeWhere) =
-        let sql, parms = Translator.comparisonToWhereClause quoter conditions.Body None List.empty
-        let where = if includeWhere then "where " else ""
-        new Tuple<_,_>(where + sql, parms |> List.rev |> Array.ofList)
+    static member TranslateImpl< 'T>(quoter, conditions:Expression<Func<'T, bool>>, sqlParams) =
+        Translator.comparisonToWhereClause quoter conditions.Body None sqlParams
+        //let where = if includeWhere then "where " else ""
+        //where + sql, parms
+        //includeWhere,
+        // |> List.rev |> Array.ofList
 
-    static member Translate(quoter:Translator.IQuoter, conditions:Quotations.Expr<(_ -> bool)>, includeWhere) = 
-        ExpressionToSql.Translate(quoter, LinqHelpers.conv conditions, includeWhere)
+    ///single F# quotation with optional 'where'
+    static member Translate(quoter:Translator.IQuoter, condition:Quotations.Expr<(_ -> bool)>, includeWhere) = 
+        let sql,prms = ExpressionToSql.TranslateImpl(quoter, LinqHelpers.conv condition, List.empty)
                 
-    static member Translate(quoter:Translator.IQuoter,conditions) = 
-        ExpressionToSql.Translate(quoter, LinqHelpers.conv conditions, true)
+        (if includeWhere then "where " else "") + sql, prms |> List.rev |> Array.ofList
+             
+    ///single Linq expression with optional 'where'
+    static member Translate(quoter:Translator.IQuoter, condition:Expression<Func<'T, bool>>, includeWhere) = 
+        let sql,prms = ExpressionToSql.TranslateImpl(quoter, condition, List.empty)
+        (if includeWhere then "where " else "") + sql, prms |> List.rev |> Array.ofList
+ 
+    ///single F# quotation
+    static member Translate(quoter:Translator.IQuoter, condition) = 
+        let sql,prms = ExpressionToSql.TranslateImpl(quoter, LinqHelpers.conv condition, List.empty)
+        "where " + sql, prms |> List.rev |> Array.ofList
+                
+    ///single Linq expression
+    static member Translate(quoter:Translator.IQuoter, condition:Expression<Func<'T, bool>>) = 
+        let sql,prms = ExpressionToSql.TranslateImpl(quoter, condition, List.empty)
+        "where " + sql, prms |> List.rev |> Array.ofList
 
-    static member Translate(quoter:Translator.IQuoter,conditions:Expression<Func<'T, bool>>) = 
-        ExpressionToSql.Translate(quoter, conditions, true)
+    ///multiple F# quotations
+    static member Translate(quoter:Translator.IQuoter, separator:Translator.ConjunctionWord, conditions:Quotations.Expr<(_ -> bool)>[]) =
+        let queries, prms = 
+            conditions
+            |> Array.fold
+                (fun (queries,prms) x -> 
+                    let newQuery, prms = ExpressionToSql.TranslateImpl(quoter, LinqHelpers.conv x, prms)
+                    newQuery::queries, prms)
+                (List.empty, List.empty)
+
+        "where " + System.String.Join(Translator.conjunctionWordAsSql separator, queries |> List.rev), prms |> List.rev |> Array.ofList
+
+    ///multiple Linq expressions
+    static member Translate(quoter:Translator.IQuoter, separator:Translator.ConjunctionWord, conditions:Expression<Func<'T, bool>>[]) = 
+        let queries, prms = 
+            conditions
+            |> Array.fold
+                (fun (queries,prms) x -> 
+                    let newQuery, prms = ExpressionToSql.TranslateImpl(quoter, x, prms)
+                    newQuery::queries, prms)
+                (List.empty, List.empty)
+
+        "where " + System.String.Join(Translator.conjunctionWordAsSql separator, queries |> List.rev), prms |> List.rev |> Array.ofList

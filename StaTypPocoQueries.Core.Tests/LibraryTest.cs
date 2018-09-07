@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using Xunit;
 
 namespace StaTypPocoQueries.Core.Tests {
@@ -138,6 +139,27 @@ namespace StaTypPocoQueries.Core.Tests {
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => x.aBool == true));
         }
         
+        [Fact]
+        public void TestMultipleConditions() {
+            AreEqual("where <anInt> = @0 or <aLong> = @1", new object[] {1, 3L}, 
+                ExpressionToSql.Translate(
+                    TestQuoter.Instance, 
+                    Translator.ConjunctionWord.Or,
+                    new Expression<Func<SomeEntity,bool>>[] {
+                        x => x.anInt == 1,
+                        x => x.aLong == 3L
+                    }));
+
+            AreEqual("where <anInt> = @0 and <aString> = @1", new object[] {1, "123"}, 
+                ExpressionToSql.Translate(
+                    TestQuoter.Instance, 
+                    Translator.ConjunctionWord.And,
+                    new Expression<Func<SomeEntity,bool>>[] {
+                        x => x.anInt == 1,
+                        x => x.aString == "123"
+                    }));
+        }
+
         [Fact]
         public void TestConjunctions() {
             AreEqual("where <aBool> = @0 and <aBool> = @1", new object[] {true, false}, 
