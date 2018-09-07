@@ -14,7 +14,7 @@ open System.Runtime.InteropServices
 [<assembly: AssemblyConfiguration("")>]
 [<assembly: AssemblyCompany("Dominik Pytlewski")>]
 [<assembly: AssemblyProduct("StaTypPocoQueries.Core")>]
-[<assembly: AssemblyCopyright("Copyright © Dominik Pytlewski 2016")>]
+[<assembly: AssemblyCopyright("Copyright © Dominik Pytlewski 2018")>]
 [<assembly: AssemblyTrademark("")>]
 [<assembly: AssemblyCulture("")>]
 
@@ -36,8 +36,8 @@ open System.Runtime.InteropServices
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [<assembly: AssemblyVersion("1.0.*")>]
-[<assembly: AssemblyVersion("1.5.0.0")>]
-[<assembly: AssemblyFileVersion("1.5.0.0")>]
+[<assembly: AssemblyVersion("1.5.1.0")>]
+[<assembly: AssemblyFileVersion("1.5.1.0")>]
 
 do
     ()

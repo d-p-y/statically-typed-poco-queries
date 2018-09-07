@@ -3,18 +3,18 @@
   <metadata>
     <id>StaTypPocoQueries.AsyncPoco</id>
 	<title>Statically Typed Poco Queries - AsyncPoco bindings</title>
-    <version>1.5.0.0</version>
+    <version>1.5.1.0</version>
     <authors>Dominik Pytlewski</authors>
     <owners/>
     <licenseUrl>https://github.com/d-p-y/statically-typed-poco-queries/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/d-p-y/statically-typed-poco-queries</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>AsyncPoco bindings for StaTypPocoQueries. It translates Linq Expressions to SQL 'where' clause. Makes it safer to work with AsyncPoco. Generates sql and parameters to be passed to Database class methods such as Query, Single, Delete etc.</description>
-    <copyright>Copyright 2017</copyright>
+    <copyright>Copyright 2018</copyright>
     <tags>strong strongly type typed query poco petapoco linq expression translator</tags>
     <dependencies>
       <dependency id="FSharp.Core" version="4.0.0.1" />
-	  <dependency id="StaTypPocoQueries.Core" version="1.0.0" />
+	  <dependency id="StaTypPocoQueries.Core" version="1.5.1" />
 	  <dependency id="AsyncPoco" version="1.2.0" />
     </dependencies>
   </metadata>
