@@ -6,6 +6,12 @@
     <Company></Company>
     <Authors>Dominik Pytlewski</Authors>
     <Copyright>Copyright © Dominik Pytlewski 2018</Copyright>
+    <Title>Statically Typed Poco Queries - Core</Title>
+    <PackageLicenseUrl>https://github.com/d-p-y/statically-typed-poco-queries/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/d-p-y/statically-typed-poco-queries</PackageProjectUrl>
+    <Description>Translates Linq Expressions to SQL 'where' clause. Makes it safer to work with "Poco ORM-ish thing" (PetaPoco, AsyncPoco etc). Generates sql and parameters to be passed to Database class methods such as Query, Single, Delete etc.</Description>
+    <PackageTags>strong strongly type typed query poco petapoco linq expression translator</PackageTags>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
   <ItemGroup>
