@@ -1,11 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netcoreapp2.1;net45</TargetFrameworks>
     <ApplicationIcon />
     <OutputType>Library</OutputType>
     <StartupObject />
-    <Version>1.6.0.0</Version>
+    <Version>1.7.0.0</Version>
     <Authors>Dominik Pytlewski</Authors>
     <Company>Dominik Pytlewski</Company>
     <Copyright>Copyright © Dominik Pytlewski 2018</Copyright>
