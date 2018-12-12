@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="AsyncPoco" Version="2.0.2" />
-    <PackageReference Include="DisposableSoftwareContainer.Docker" Version="1.2.0" />
+    <PackageReference Include="DisposableSoftwareContainer.Docker" Version="1.3.0" />
     <PackageReference Include="FSharp.Core" Version="4.5.4" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="2.1.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.5.1" />
