@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AsyncPoco" Version="2.0.0" />
+    <PackageReference Include="AsyncPoco" Version="2.0.2" />
     <PackageReference Include="FSharp.Core" Version="4.5.0" />
   </ItemGroup>
 
