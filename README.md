@@ -73,7 +73,7 @@ I think so. There are plenty of tests for both the [translator](https://github.c
 * .NET version support (tested)  
   - .NET Framework 4.5.2 under Windows 7  
   - Mono 4.2.1 under Ubuntu 16.04
-  - dotnet core 2.1 or newer
+  - dotnet standard 2.0 or [meaning dotnet core 2.0 or later is fine](https://devblogs.microsoft.com/dotnet/announcing-net-standard-2-0/)
 * Language support  
   Both C&#35; and F&#35; is supported. More specifically translation is possible for System.Linq.Expressions and Microsoft.FSharp.Quotations
 * Quoting of reserved names such as 'table'  
