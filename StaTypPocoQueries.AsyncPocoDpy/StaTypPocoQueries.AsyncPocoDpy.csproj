@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
+    <Version>1.7.0.1</Version>
+    <Company>Dominik Pytlewski</Company>
+    <Copyright>Copyright © Dominik Pytlewski 2019</Copyright>
+    <Title>Statically Typed Poco Queries - bindings for AsyncPocoDpy</Title>
+    <PackageLicenseUrl>https://github.com/d-p-y/statically-typed-poco-queries/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/d-p-y/statically-typed-poco-queries</PackageProjectUrl>
+    <Description>AsyncPoco bindings for StaTypPocoQueries. It translates Linq Expressions to SQL 'where' clause. Makes it safer to work with AsyncPoco. Generates sql and parameters to be passed to Database class methods such as Query, Single, Delete etc.</Description>
+    <PackageTags>strong strongly type typed query poco petapoco linq expression translator</PackageTags>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AsyncPocoDpy" Version="1.0.0" />
+    <PackageReference Include="FSharp.Core" Version="4.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StaTypPocoQueries.Core\StaTypPocoQueries.Core.fsproj" />
+  </ItemGroup>
+
+</Project>
