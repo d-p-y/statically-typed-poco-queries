@@ -11,7 +11,15 @@
     <Description>AsyncPoco bindings for StaTypPocoQueries. It translates Linq Expressions to SQL 'where' clause. Makes it safer to work with AsyncPoco. Generates sql and parameters to be passed to Database class methods such as Query, Single, Delete etc.</Description>
     <PackageTags>strong strongly type typed query poco petapoco linq expression translator</PackageTags>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="AsyncPoco" Version="2.0.1" />
