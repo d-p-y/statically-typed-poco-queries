@@ -5,6 +5,7 @@ namespace StaTypPocoQueries.Core
 open System
 open System.Linq.Expressions
 open Microsoft.FSharp.Linq.RuntimeHelpers
+open System.Runtime.InteropServices
 
 module Translator = 
     type IQuoter =
@@ -35,25 +36,25 @@ module Translator =
         | _ -> false, sprintf "@%i" curParams.Length, Some v 
         //use sqlparameters instead of inline sql due to PetaPoco's static query cache growing
 
-    let rec constantOrMemberAccessValue (quote:IQuoter) (body:Expression) curParams = 
+    let rec constantOrMemberAccessValue (quote:IQuoter) nameExtractor (body:Expression) curParams = 
         match (body.NodeType, body) with
         | ExpressionType.Constant, (:? ConstantExpression as body) -> 
             literalToSql body.Value curParams
         | ExpressionType.Convert, (:? UnaryExpression as body) -> 
-            constantOrMemberAccessValue quote body.Operand curParams
+            constantOrMemberAccessValue quote nameExtractor body.Operand curParams
         | ExpressionType.MemberAccess, (:? MemberExpression as body) -> 
             match body.Member.GetType().Name with
             |"RtFieldInfo"|"MonoField" -> 
                 let unaryExpr = Expression.Convert(body, typeof<obj>)
                 let v = Expression.Lambda<Func<obj>>(unaryExpr).Compile()
                 literalToSql (v.Invoke ()) curParams
-            |"RuntimePropertyInfo"|"MonoProperty" -> false, quote.QuoteColumn body.Member.Name, None
+            |"RuntimePropertyInfo"|"MonoProperty" -> false, quote.QuoteColumn (nameExtractor body.Member), None
             |_ as name -> failwithf "unsupported member type name %s" name   
         | _ -> failwithf "unsupported nodetype %A" body   
 
-    let leafExpression quote (body:BinaryExpression) sqlOperator curParams =
-        let _, lVal, lParam = constantOrMemberAccessValue quote body.Left curParams
-        let rNull, rVal, rParam = constantOrMemberAccessValue quote body.Right curParams
+    let leafExpression quote nameExtractor (body:BinaryExpression) sqlOperator curParams =
+        let _, lVal, lParam = constantOrMemberAccessValue quote nameExtractor body.Left curParams
+        let rNull, rVal, rParam = constantOrMemberAccessValue quote nameExtractor body.Right curParams
 
         let oper = 
             match (rNull, body.NodeType) with
@@ -69,8 +70,8 @@ module Translator =
         | None, Some r -> r::curParams
         | Some l, Some r -> r::l::curParams
         
-    let boolValueToWhereClause quote (body:MemberExpression) curParams isTrue = 
-        let _, value, _ = constantOrMemberAccessValue quote body curParams
+    let boolValueToWhereClause quote nameExtractor (body:MemberExpression) curParams isTrue = 
+        let _, value, _ = constantOrMemberAccessValue quote nameExtractor body curParams
         value + (sprintf " = @%i" curParams.Length), (isTrue:obj)::curParams
         
     let binExpToSqlOper (body:BinaryExpression) =
@@ -95,14 +96,14 @@ module Translator =
         | Some parentJunction when parentJunction = junctionSql -> sql
         | _ -> sprintf "(%s)" sql
 
-    let rec comparisonToWhereClause (quote:IQuoter) (body:Expression) parentJunction curSqlParams = 
+    let rec comparisonToWhereClause (quote:IQuoter) nameExtractor (body:Expression) parentJunction curSqlParams = 
         match body with
         | :? UnaryExpression as body when body.NodeType = ExpressionType.Not && body.Type = typeof<System.Boolean> ->
             match body.Operand with
-            | :? MemberExpression as body -> boolValueToWhereClause quote body curSqlParams false
+            | :? MemberExpression as body -> boolValueToWhereClause quote nameExtractor body curSqlParams false
             | _ -> failwithf "not condition has unexpected type %A" body
         | :? MemberExpression as body when body.NodeType = ExpressionType.MemberAccess && body.Type = typeof<System.Boolean> ->
-            boolValueToWhereClause quote body curSqlParams true
+            boolValueToWhereClause quote nameExtractor body curSqlParams true
         | :? BinaryExpression as body -> 
             match junctionToSqlOper body with
             | Some junctionSql ->
@@ -111,12 +112,12 @@ module Translator =
                     | :? BinaryExpression as expr ->
                         match junctionToSqlOper expr, binExpToSqlOper expr with
                         | Some _, None -> 
-                            let sql, parms = comparisonToWhereClause quote expr (Some junctionSql) curSqlParams
+                            let sql, parms = comparisonToWhereClause quote nameExtractor expr (Some junctionSql) curSqlParams
                             let sql = sql |> sqlInBracketsIfNeeded parentJunction junctionSql
                             sql, parms
-                        | None, Some sqlOper -> leafExpression quote expr sqlOper curSqlParams
+                        | None, Some sqlOper -> leafExpression quote nameExtractor expr sqlOper curSqlParams
                         | _ -> failwith "expression is not a junction and not a supported leaf"
-                    | _ -> comparisonToWhereClause quote expr parentJunction curSqlParams
+                    | _ -> comparisonToWhereClause quote nameExtractor expr parentJunction curSqlParams
 
                 let lSql, curSqlParams = consumeExpr body.Left curSqlParams
                 let rSql, curSqlParams = consumeExpr body.Right curSqlParams
@@ -130,7 +131,7 @@ module Translator =
 
             | None -> 
                 match binExpToSqlOper body with
-                | Some sqlOper -> leafExpression quote body sqlOper curSqlParams
+                | Some sqlOper -> leafExpression quote nameExtractor body sqlOper curSqlParams
                 | None -> failwithf "unsupported operator %A in leaf" body.NodeType
         | _ -> failwithf "conditions has unexpected type %A" body
 
@@ -142,18 +143,30 @@ module LinqHelpers =
         let call = linq :?> MethodCallExpression
         let lambda = call.Arguments.[0] :?> LambdaExpression
         Expression.Lambda<Func<'T, bool>>(lambda.Body, lambda.Parameters)
-        
-type ExpressionToSql = 
-    static member Translate<'T>(quoter, conditions:Expression<Func<'T, bool>>, includeWhere) =
-        let sql, parms = Translator.comparisonToWhereClause quoter conditions.Body None List.empty
+
+module Hlp =
+    let translate quoter nameExtractor conditions includeWhere =
+        let sql, parms = Translator.comparisonToWhereClause quoter nameExtractor conditions None List.empty
         let where = if includeWhere then "WHERE " else ""
         new Tuple<_,_>(where + sql, parms |> List.rev |> Array.ofList)
 
-    static member Translate(quoter:Translator.IQuoter, conditions:Quotations.Expr<(_ -> bool)>, includeWhere) = 
-        ExpressionToSql.Translate(quoter, LinqHelpers.conv conditions, includeWhere)
-                
-    static member Translate(quoter:Translator.IQuoter,conditions) = 
-        ExpressionToSql.Translate(quoter, LinqHelpers.conv conditions, true)
+type ExpressionToSql =
+    static member Translate<'T>(quoter, conditions:Expression<Func<'T, bool>>, 
+            [<Optional; DefaultParameterValue(true)>]includeWhere, 
+            [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,string>)>]customNameExtractor) =
 
-    static member Translate(quoter:Translator.IQuoter,conditions:Expression<Func<'T, bool>>) = 
-        ExpressionToSql.Translate(quoter, conditions, true)
+        let nameExtractor = 
+            if customNameExtractor = null 
+            then (fun (x:System.Reflection.MemberInfo) -> x.Name) 
+            else (fun (x:System.Reflection.MemberInfo) -> (customNameExtractor:Func<System.Reflection.MemberInfo,string>).Invoke x)
+
+        Hlp.translate quoter nameExtractor conditions.Body includeWhere 
+        
+    static member Translate(
+                            quoter:Translator.IQuoter, conditions:Quotations.Expr<(_ -> bool)>, ?includeWhere, 
+                            ?customNameExtractor : (System.Reflection.MemberInfo->string)) =
+
+        let nameExtractor = customNameExtractor |> Option.defaultValue (fun x -> x.Name)
+        Hlp.translate quoter nameExtractor (LinqHelpers.conv conditions).Body (Option.defaultValue true includeWhere)
+
+    static member AsFsFunc (x:Func<_,_>) = fun y -> x.Invoke(y)
