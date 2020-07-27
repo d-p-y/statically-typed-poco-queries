@@ -30,6 +30,7 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
                 anInt int not null, 
                 aString nvarchar(50) null, 
                 nullableInt int null,
+                actualName varchar(50) null,
 
 	            CONSTRAINT PK_SomeEntity PRIMARY KEY CLUSTERED (id))",
             @"create table SpecialEntity (
@@ -51,7 +52,7 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
             var cl = FSharpOption<Docker.CleanMode>.Some(Docker.CleanMode.ContainerOnly);
 
             using (var sqlServerCont = new Docker.AutostartedDockerContainer(dockerFileFolder,logger:fsLog,cleanMode:cl)) {
-                var connStr = $"Data Source={sqlServerCont.IpAddress},{serverPort};Initial Catalog=master;Trusted_Connection=False;User=sa;Password={saPasswd};Connection Timeout=2";
+                var connStr = $"Data Source={sqlServerCont.IpAddress},{serverPort};Initial Catalog=master;Trusted_Connection=False;User=sa;Password={saPasswd};Connection Timeout=2;TrustServerCertificate=True";
                 logger($"Using connection string {connStr}");
 
                 var sqlConn = Attempt(logger, () => {
