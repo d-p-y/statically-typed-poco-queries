@@ -21,6 +21,7 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
         [Column] public int AnInt { get; set; }
         [Column] public string AString { get; set; }
         [Column] public int? NullableInt { get; set; }
+        [Column("actualName")] public string OfficialName { get; set; }
 
         public override int GetHashCode() {
             if (Id != 0) {
@@ -29,7 +30,8 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
             
             return AnInt.GetHashCode() + 
                 (AString?.GetHashCode() ?? 0) + 
-                (NullableInt?.GetHashCode() ?? 0); 
+                (NullableInt?.GetHashCode() ?? 0) +
+                (OfficialName?.GetHashCode() ?? 0); 
         }
 
         public override bool Equals(object rawOther) {
@@ -52,7 +54,8 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
             return 
                 oth.AString == AString && 
                 oth.AnInt == AnInt && 
-                oth.NullableInt == NullableInt;
+                oth.NullableInt == NullableInt &&
+                oth.OfficialName == OfficialName;
         }
     }
 }

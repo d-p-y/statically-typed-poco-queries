@@ -15,7 +15,8 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
                 id integer primary key autoincrement not null,
                 anInt int not null, 
                 aString varchar(50) null, 
-                nullableInt int null)",
+                nullableInt int null,
+                actualName varchar(50) null)",
             @"create table SpecialEntity (
                 id integer primary key autoincrement not null,
                 `table` int not null, 

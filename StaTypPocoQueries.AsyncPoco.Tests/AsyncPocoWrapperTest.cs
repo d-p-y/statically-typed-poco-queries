@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
@@ -151,6 +152,25 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
                 var outp = await db.DeleteAsync<SomeEntity>(x => x.AString == "foo1");
                 Assert.Equal(1, outp);
                 Assert.Equal(inp2, await db.SingleAsync<SomeEntity>(x => x.AnInt == 5));
+            });
+        }
+        
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void ColumnNameInAttribute(IRunner runner) {
+            var inp = new SomeEntity {
+                OfficialName = "foo"
+            };
+
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
+
+                //note actualName iso OfficialName
+                var outp1 = (await db.FetchAsync<SomeEntity>("select Id,AnInt,AString,NullableInt,actualName from SomeEntity")).Single();
+                Assert.Equal(inp, outp1);
+                
+                var outp2 = await db.SingleAsync<SomeEntity>(x => x.OfficialName == "foo");
+                Assert.Equal(inp, outp2);
             });
         }
     }
