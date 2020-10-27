@@ -124,7 +124,22 @@ namespace StaTypPocoQueries.AsyncPocoDpy.Tests {
                 Assert.True(await db.ExistsAsync<SomeEntity>(x => x.AString == "foo"));
             });
         }
-        
+
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void SimpleNotExistsTest(IRunner runner) {
+            var inp = new SomeEntity {
+                AnInt = 5,
+                AString = "foo1"
+            };
+
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
+
+                Assert.False(await db.ExistsAsync<SomeEntity>(x => x.AString == "foo"));
+            });
+        }
+
         [Theory]
         [MemberData(nameof(DbProviders))]
         public async void SimpleDeleteTest(IRunner runner) {
