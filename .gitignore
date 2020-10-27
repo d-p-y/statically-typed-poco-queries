@@ -9,3 +9,4 @@ obj/
 *.user
 runGitVersionPropagate.bat
 /.idea
+/update_version_from_tag.bat
