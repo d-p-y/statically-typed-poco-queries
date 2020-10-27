@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using Xunit;
 
@@ -150,7 +151,28 @@ namespace StaTypPocoQueries.Core.Tests {
             AreEqual("WHERE <aBool> = @0", new object[] {true},
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => x.aBool == true));
         }
+        
+        [Fact]
+        public void TestMultipleConditions() {
+            AreEqual("WHERE <anInt> = @0 or <aLong> = @1", new object[] {1, 3L}, 
+                ExpressionToSql.Translate(
+                    TestQuoter.Instance, 
+                    Translator.ConjunctionWord.Or,
+                    new Expression<Func<SomeEntity,bool>>[] {
+                        x => x.anInt == 1,
+                        x => x.aLong == 3L
+                    }));
 
+            AreEqual("WHERE <anInt> = @0 and <aString> = @1", new object[] {1, "123"}, 
+                ExpressionToSql.Translate(
+                    TestQuoter.Instance, 
+                    Translator.ConjunctionWord.And,
+                    new Expression<Func<SomeEntity,bool>>[] {
+                        x => x.anInt == 1,
+                        x => x.aString == "123"
+                    }));
+        }
+        
         [Fact]
         public void TestConjunctions() {
             AreEqual("WHERE <aBool> = @0 AND <aBool> = @1", new object[] {true, false},

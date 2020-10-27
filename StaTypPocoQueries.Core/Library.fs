@@ -10,6 +10,16 @@ open System.Runtime.InteropServices
 module Translator = 
     type IQuoter =
         abstract member QuoteColumn: columnName:string-> string
+ 
+    type ConjunctionWord =
+    |And=1
+    |Or=2
+
+    let conjunctionWordAsSql x =
+        match x with
+        |ConjunctionWord.And -> " and "
+        |ConjunctionWord.Or -> " or "
+        |_ -> failwith "unsupported ConjunctionWord"
 
     type SqlDialect =
     |SqlServer
@@ -145,28 +155,74 @@ module LinqHelpers =
         Expression.Lambda<Func<'T, bool>>(lambda.Body, lambda.Parameters)
 
 module Hlp =
-    let translate quoter nameExtractor conditions includeWhere =
+    let translateOne quoter nameExtractor conditions includeWhere =
         let sql, parms = Translator.comparisonToWhereClause quoter nameExtractor conditions None List.empty
         let where = if includeWhere then "WHERE " else ""
         new Tuple<_,_>(where + sql, parms |> List.rev |> Array.ofList)
 
+    let translateMultiple includeWhere quoter separator nameExtractor conditions toBody =
+        let queries, prms =
+            conditions
+            |> Array.fold
+                (fun (queries,prms) condition -> 
+                    let query, prms = Translator.comparisonToWhereClause quoter nameExtractor (toBody condition) None prms
+                    query::queries, prms)
+                (List.empty, List.empty)
+ 
+        let query = System.String.Join(Translator.conjunctionWordAsSql separator, queries |> List.rev)        
+        let where = if includeWhere then "WHERE " else ""
+
+        where + query, prms |> List.rev |> Array.ofList
+
+    let cneToFun (customNameExtractor:Func<System.Reflection.MemberInfo,string>) = 
+        if customNameExtractor = null 
+        then (fun (x:System.Reflection.MemberInfo) -> x.Name) 
+        else (fun (x:System.Reflection.MemberInfo) -> (customNameExtractor:Func<System.Reflection.MemberInfo,string>).Invoke x)
+
+    let getBody x = (x:Expression<Func<'T, bool>>).Body
+
 type ExpressionToSql =
+    
+    ///single Linq expression
     static member Translate<'T>(quoter, conditions:Expression<Func<'T, bool>>, 
             [<Optional; DefaultParameterValue(true)>]includeWhere, 
             [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,string>)>]customNameExtractor) =
 
-        let nameExtractor = 
-            if customNameExtractor = null 
-            then (fun (x:System.Reflection.MemberInfo) -> x.Name) 
-            else (fun (x:System.Reflection.MemberInfo) -> (customNameExtractor:Func<System.Reflection.MemberInfo,string>).Invoke x)
+        Hlp.translateOne quoter 
+            (Hlp.cneToFun customNameExtractor) 
+            (Hlp.getBody conditions) 
+            includeWhere 
 
-        Hlp.translate quoter nameExtractor conditions.Body includeWhere 
+    ///multiple Linq expressions
+    static member Translate<'T>(quoter:Translator.IQuoter, separator:Translator.ConjunctionWord, 
+            conditions:Expression<Func<'T, bool>>[],
+            [<Optional; DefaultParameterValue(true)>]includeWhere, 
+            [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,string>)>]customNameExtractor) = 
         
-    static member Translate(
-                            quoter:Translator.IQuoter, conditions:Quotations.Expr<(_ -> bool)>, ?includeWhere, 
-                            ?customNameExtractor : (System.Reflection.MemberInfo->string)) =
+        let nameExtractor = Hlp.cneToFun customNameExtractor        
+        Hlp.translateMultiple includeWhere quoter separator nameExtractor conditions Hlp.getBody
 
-        let nameExtractor = customNameExtractor |> Option.defaultValue (fun x -> x.Name)
-        Hlp.translate quoter nameExtractor (LinqHelpers.conv conditions).Body (Option.defaultValue true includeWhere)
+    ///single F# quotation
+    static member Translate(quoter:Translator.IQuoter, conditions:Quotations.Expr<(_ -> bool)>,
+            ?includeWhere, ?customNameExtractor : (System.Reflection.MemberInfo->string)) =
+                    
+        Hlp.translateOne quoter 
+            (customNameExtractor |> Option.defaultValue (fun x -> x.Name))
+            (Hlp.getBody (LinqHelpers.conv conditions)) 
+            (Option.defaultValue true includeWhere)
+    
+    ///multiple F# quotations
+    static member Translate(quoter:Translator.IQuoter, separator:Translator.ConjunctionWord, 
+            conditions:Quotations.Expr<(_ -> bool)>[],
+            ?includeWhere, ?customNameExtractor : (System.Reflection.MemberInfo->string)) =
+        
+        let nameExtractor = customNameExtractor |> Option.defaultValue (fun x -> x.Name)        
+        let includeWhere = 
+           includeWhere
+           |> function
+           |Some false -> false
+           | _ -> true
+
+        Hlp.translateMultiple includeWhere quoter separator nameExtractor conditions (fun x -> LinqHelpers.conv x)
 
     static member AsFsFunc (x:Func<_,_>) = fun y -> x.Invoke(y)

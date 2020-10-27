@@ -11,6 +11,7 @@ using Xunit;
 using AsyncPoco;
 using DisposableSoftwareContainer;
 using Microsoft.FSharp.Core;
+using StaTypPocoQueries.Core;
 using Xunit.Abstractions;
 
 namespace StaTypPocoQueries.AsyncPoco.Tests {
@@ -113,6 +114,35 @@ namespace StaTypPocoQueries.AsyncPoco.Tests {
                 await db.InsertAsync(inp);
             
                 var outp = await db.FetchAsync<SomeEntity>(x => x.AString == "foo");
+                Assert.Equal(new List<SomeEntity> {inp}, outp);
+            });
+        }
+        
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void SimpleFetchMultipleCriteriaTest(IRunner runner) {
+            var inp = new SomeEntity {
+                AnInt = 5,
+                AString = "foo"
+            };
+
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
+            
+                var outp = await db.FetchAsync<SomeEntity>(
+                    Translator.ConjunctionWord.Or,
+                    x => x.AString == "foo2",
+                    x => x.AString == "foo");
+                Assert.Equal(new List<SomeEntity> {inp}, outp);
+            });
+            
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp);
+            
+                var outp = await db.FetchAsync<SomeEntity>(
+                    Translator.ConjunctionWord.And,
+                    x => x.AString == "foo",
+                    x => x.AnInt == 5);
                 Assert.Equal(new List<SomeEntity> {inp}, outp);
             });
         }
