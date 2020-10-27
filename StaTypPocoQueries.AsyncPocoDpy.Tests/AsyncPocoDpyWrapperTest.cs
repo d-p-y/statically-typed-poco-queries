@@ -7,10 +7,10 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace StaTypPocoQueries.AsyncPocoDpy.Tests {
-    public class AsyncPocoWrapperTest {
+    public class AsyncPocoDpyWrapperTest {
         private readonly Action<string> _logger;
 
-        public AsyncPocoWrapperTest(ITestOutputHelper hlp) {
+        public AsyncPocoDpyWrapperTest(ITestOutputHelper hlp) {
             _logger = hlp.WriteLine;
         }
 
