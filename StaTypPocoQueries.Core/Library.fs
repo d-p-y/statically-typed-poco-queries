@@ -17,8 +17,8 @@ module Translator =
 
     let conjunctionWordAsSql x =
         match x with
-        |ConjunctionWord.And -> " and "
-        |ConjunctionWord.Or -> " or "
+        |ConjunctionWord.And -> " AND "
+        |ConjunctionWord.Or -> " OR "
         |_ -> failwith "unsupported ConjunctionWord"
 
     type SqlDialect =
