@@ -154,7 +154,7 @@ namespace StaTypPocoQueries.Core.Tests {
         
         [Fact]
         public void TestMultipleConditions() {
-            AreEqual("WHERE <anInt> = @0 or <aLong> = @1", new object[] {1, 3L}, 
+            AreEqual("WHERE (<anInt> = @0) OR (<aLong> = @1)", new object[] {1, 3L}, 
                 ExpressionToSql.Translate(
                     TestQuoter.Instance, 
                     Translator.ConjunctionWord.Or,
@@ -163,7 +163,7 @@ namespace StaTypPocoQueries.Core.Tests {
                         x => x.aLong == 3L
                     }));
 
-            AreEqual("WHERE <anInt> = @0 and <aString> = @1", new object[] {1, "123"}, 
+            AreEqual("WHERE (<anInt> = @0) AND (<aString> = @1)", new object[] {1, "123"}, 
                 ExpressionToSql.Translate(
                     TestQuoter.Instance, 
                     Translator.ConjunctionWord.And,
@@ -171,8 +171,17 @@ namespace StaTypPocoQueries.Core.Tests {
                         x => x.anInt == 1,
                         x => x.aString == "123"
                     }));
+
+            AreEqual("WHERE (<anInt> = @0 OR <aLong> = @1) AND (<aString> = @2)", new object[] { 1, 3L, "123" },
+                ExpressionToSql.Translate(
+                    TestQuoter.Instance,
+                    Translator.ConjunctionWord.And,
+                    new Expression<Func<SomeEntity, bool>>[] {
+                        x => x.anInt == 1 || x.aLong == 3L,
+                        x => x.aString == "123"
+                    }));
         }
-        
+
         [Fact]
         public void TestConjunctions() {
             AreEqual("WHERE <aBool> = @0 AND <aBool> = @1", new object[] {true, false},

@@ -166,7 +166,7 @@ module Hlp =
             |> Array.fold
                 (fun (queries,prms) condition -> 
                     let query, prms = Translator.comparisonToWhereClause quoter nameExtractor (toBody condition) None prms
-                    query::queries, prms)
+                    (sprintf "(%s)" query)::queries, prms)
                 (List.empty, List.empty)
  
         let query = System.String.Join(Translator.conjunctionWordAsSql separator, queries |> List.rev)        
