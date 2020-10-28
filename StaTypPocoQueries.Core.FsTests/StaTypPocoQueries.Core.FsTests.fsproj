@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp2.1;net462</TargetFrameworks>
+    <OutputType>Library</OutputType>
+    <Company>Dominik Pytlewski</Company>
+    <Copyright>Copyright © Dominik Pytlewski 2020</Copyright>
+    <Version>1.10.0.0</Version>
+    <Authors>Dominik Pytlewski</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AsyncPoco" Version="2.0.1" />
+    <PackageReference Include="DisposableSoftwareContainer.Docker" Version="1.4.0" />
+    <PackageReference Include="FSharp.Core" Version="4.5.4" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.1.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.5.1" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="CoreTest.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StaTypPocoQueries.Core\StaTypPocoQueries.Core.fsproj" />
+  </ItemGroup>
+
+</Project>

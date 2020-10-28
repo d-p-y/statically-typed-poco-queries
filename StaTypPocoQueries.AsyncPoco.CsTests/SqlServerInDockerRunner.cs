@@ -15,7 +15,7 @@ using AsyncPoco;
 using DisposableSoftwareContainer;
 using Microsoft.FSharp.Core;
 
-namespace StaTypPocoQueries.AsyncPoco.Tests {
+namespace StaTypPocoQueries.AsyncPoco.CsTests {
     public class SqlServerInDockerRunner : IRunner {
         private string DbName => "testingdb";
         

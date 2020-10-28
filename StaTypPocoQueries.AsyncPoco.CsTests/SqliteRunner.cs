@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncPoco;
 
-namespace StaTypPocoQueries.AsyncPoco.Tests {
+namespace StaTypPocoQueries.AsyncPoco.CsTests {
     public class SqliteRunner : IRunner {
         private static string[] SqlCreateTestTable =  {
             @"create table SomeEntity (

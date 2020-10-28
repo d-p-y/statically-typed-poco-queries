@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncPoco;
 
-namespace StaTypPocoQueries.AsyncPoco.Tests {
+namespace StaTypPocoQueries.AsyncPoco.CsTests {
     public interface IRunner {
         Task Run(Action<string> logger, Func<Database,Task> testBody);
     }

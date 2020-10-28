@@ -14,7 +14,7 @@ using Microsoft.FSharp.Core;
 using StaTypPocoQueries.Core;
 using Xunit.Abstractions;
 
-namespace StaTypPocoQueries.AsyncPoco.Tests {
+namespace StaTypPocoQueries.AsyncPoco.CsTests {
     public class AsyncPocoWrapperTest {
         private readonly Action<string> _logger;
 
