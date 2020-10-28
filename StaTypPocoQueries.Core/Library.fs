@@ -223,6 +223,6 @@ type ExpressionToSql =
            |Some false -> false
            | _ -> true
 
-        Hlp.translateMultiple includeWhere quoter separator nameExtractor conditions (fun x -> LinqHelpers.conv x)
+        Hlp.translateMultiple includeWhere quoter separator nameExtractor conditions (fun x -> LinqHelpers.conv x |> Hlp.getBody)
 
     static member AsFsFunc (x:Func<_,_>) = fun y -> x.Invoke(y)
