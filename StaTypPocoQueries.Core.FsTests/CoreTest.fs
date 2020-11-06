@@ -32,3 +32,18 @@ type Tests() =
         Assert.Equal("WHERE (<SomeInt> = @0 AND <SomeStr> = @1) OR (<SomeInt> = @2)", query)
         Assert.Equal([5 :> obj; "abc" :> obj; 15 :> obj], parms)
 
+    [<Fact>]
+    let ``test member access owner origin`` () =
+        //issue #7
+        let s = SomeEntity(SomeStr="123")
+        let query, parms = 
+            ExpressionToSql.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> x.SomeStr = s.SomeStr @>)
+
+        Assert.Equal("WHERE <SomeStr> = @0", query)
+        Assert.Equal(["123" :> obj], parms)
+
+        let query, parms = 
+            ExpressionToSql.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> s.SomeStr = x.SomeStr @>)
+
+        Assert.Equal("WHERE @0 = <SomeStr>", query)
+        Assert.Equal(["123" :> obj], parms)

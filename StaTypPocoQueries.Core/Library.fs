@@ -46,20 +46,28 @@ module Translator =
         | _ -> false, sprintf "@%i" curParams.Length, Some v 
         //use sqlparameters instead of inline sql due to PetaPoco's static query cache growing
 
-    let rec constantOrMemberAccessValue (quote:IQuoter) nameExtractor (body:Expression) curParams = 
+    let rec constantOrMemberAccessValue (quote:IQuoter) nameExtractor (body:Expression) curParams =
         match (body.NodeType, body) with
         | ExpressionType.Constant, (:? ConstantExpression as body) -> 
             literalToSql body.Value curParams
         | ExpressionType.Convert, (:? UnaryExpression as body) -> 
             constantOrMemberAccessValue quote nameExtractor body.Operand curParams
-        | ExpressionType.MemberAccess, (:? MemberExpression as body) -> 
-            match body.Member.GetType().Name with
-            |"RtFieldInfo"|"MonoField" -> 
+        | ExpressionType.MemberAccess, (:? MemberExpression as body) ->
+            match body.Expression with
+            | :? ParameterExpression ->
+                //maybe name is expected
+                match body.Member.GetType().Name with
+                |"RtFieldInfo"|"MonoField" -> 
+                    let unaryExpr = Expression.Convert(body, typeof<obj>)
+                    let v = Expression.Lambda<Func<obj>>(unaryExpr).Compile()
+                    literalToSql (v.Invoke ()) curParams
+                |"RuntimePropertyInfo"|"MonoProperty" -> false, quote.QuoteColumn (nameExtractor body.Member), None
+                |_ as name -> failwithf "unsupported member type name %s" name
+            |_ ->
+                //constant is expected
                 let unaryExpr = Expression.Convert(body, typeof<obj>)
                 let v = Expression.Lambda<Func<obj>>(unaryExpr).Compile()
                 literalToSql (v.Invoke ()) curParams
-            |"RuntimePropertyInfo"|"MonoProperty" -> false, quote.QuoteColumn (nameExtractor body.Member), None
-            |_ as name -> failwithf "unsupported member type name %s" name   
         | _ -> failwithf "unsupported nodetype %A" body   
 
     let leafExpression quote nameExtractor (body:BinaryExpression) sqlOperator curParams =

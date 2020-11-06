@@ -228,5 +228,23 @@ namespace StaTypPocoQueries.Core.Tests {
                     true, 
                     x => x.GetCustomAttribute<ColumnAttribute>()?.Name ?? x.Name));
         }
+
+        [Fact]
+        public void ChecksMemberAccessOwnerOrigin() {
+            //issue #7
+            var someInstance = new SomeEntity {aString = "123"};
+
+            AreEqual("WHERE <aString> = @0", 
+                new object[] { "123"},
+                ExpressionToSql.Translate<SomeEntity>(
+                    TestQuoter.Instance, 
+                    x => x.aString == someInstance.aString));
+            
+            AreEqual("WHERE @0 = <aString>", 
+                new object[] { "123"},
+                ExpressionToSql.Translate<SomeEntity>(
+                    TestQuoter.Instance, 
+                    x => someInstance.aString == x.aString));
+        }
     }
 }
