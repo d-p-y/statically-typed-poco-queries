@@ -52,6 +52,14 @@ namespace StaTypPocoQueries.Core.Tests {
             Assert.Equal(expectedSql, fact.Item1);
             Assert.Equal(new object[0], new List<object>(fact.Item2)); //to make it IComparable
         }
+        
+        [Fact]
+        public void TestConstantsOnly() {
+            var dt1 = new DateTime(2001, 2, 3, 4, 5, 6);
+            var dt2 = new DateTime(2001, 2, 3, 4, 5, 7);
+            AreEqual("WHERE @0 = @1", new object[] { dt1, dt2 },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => dt1 == dt2));
+        }
 
         [Fact]
         public void TestEqualsNonNullVariable() {

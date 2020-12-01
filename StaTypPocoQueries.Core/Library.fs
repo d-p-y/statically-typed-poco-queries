@@ -7,6 +7,12 @@ open System.Linq.Expressions
 open Microsoft.FSharp.Linq.RuntimeHelpers
 open System.Runtime.InteropServices
 
+module List =
+    let appendIfSome x lst =
+        match x with 
+        |Some x -> x::lst
+        |_ -> lst
+
 module Translator = 
     type IQuoter =
         abstract member QuoteColumn: columnName:string-> string
@@ -72,7 +78,9 @@ module Translator =
 
     let leafExpression quote nameExtractor (body:BinaryExpression) sqlOperator curParams =
         let _, lVal, lParam = constantOrMemberAccessValue quote nameExtractor body.Left curParams
+        let curParams = List.appendIfSome lParam curParams
         let rNull, rVal, rParam = constantOrMemberAccessValue quote nameExtractor body.Right curParams
+        let curParams = List.appendIfSome rParam curParams
 
         let oper = 
             match (rNull, body.NodeType) with
@@ -81,12 +89,7 @@ module Translator =
             | false, _ -> sprintf " %s " sqlOperator
             | _ -> failwithf "unsupported nodetype %A" body
 
-        lVal + oper + rVal,
-        match lParam,rParam with
-        | None, None -> curParams
-        | Some l, None -> l::curParams
-        | None, Some r -> r::curParams
-        | Some l, Some r -> r::l::curParams
+        lVal + oper + rVal, curParams
         
     let boolValueToWhereClause quote nameExtractor (body:MemberExpression) curParams isTrue = 
         let _, value, _ = constantOrMemberAccessValue quote nameExtractor body curParams

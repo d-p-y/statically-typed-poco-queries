@@ -9,6 +9,15 @@ type SomeEntity() =
 
 type Tests() =
     let quoter = {new Translator.IQuoter with member __.QuoteColumn x = sprintf "<%s>" x}
+    
+    [<Fact>]
+    let ``test constants only`` () =
+        let s = "abc"
+        let query, parms = 
+            ExpressionToSql.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> 5 = 6 @>)
+
+        Assert.Equal("WHERE @0 = @1", query)
+        Assert.Equal([5 :> obj; 6 :> obj], parms)
 
     [<Fact>]
     let ``test single equals notnull quotation`` () =
