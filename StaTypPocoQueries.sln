@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StaTypPocoQueries.AsyncPoco
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "StaTypPocoQueries.Core", "StaTypPocoQueries.Core\StaTypPocoQueries.Core.fsproj", "{F082E729-4994-46F8-AF9E-CB17BEC949DF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StaTypPocoQueries.Core.Tests", "StaTypPocoQueries.Core.Tests\StaTypPocoQueries.Core.Tests.csproj", "{9C11932D-B66C-43F7-A8F4-82932E683B33}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StaTypPocoQueries.Core.CsTests", "StaTypPocoQueries.Core.CsTests\StaTypPocoQueries.Core.CsTests.csproj", "{9C11932D-B66C-43F7-A8F4-82932E683B33}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StaTypPocoQueries.AsyncPocoDpy", "StaTypPocoQueries.AsyncPocoDpy\StaTypPocoQueries.AsyncPocoDpy.csproj", "{4024A73E-F899-44E3-A5F1-3E1D0FA30B63}"
 EndProject

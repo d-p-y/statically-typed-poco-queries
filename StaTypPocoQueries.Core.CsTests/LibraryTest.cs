@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Xunit;
 
-namespace StaTypPocoQueries.Core.Tests {
+namespace StaTypPocoQueries.Core.CsTests {
     class ColumnAttribute : Attribute {
         public string Name { get; }
 
