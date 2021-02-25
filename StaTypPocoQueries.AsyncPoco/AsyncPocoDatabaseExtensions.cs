@@ -54,7 +54,7 @@ namespace StaTypPocoQueries.AsyncPoco {
         }
         
         public static Task<int> DeleteAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs, null);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs);
             return self.DeleteAsync<T>(translated.Item1, translated.Item2);
         }
 
@@ -64,7 +64,7 @@ namespace StaTypPocoQueries.AsyncPoco {
         }
         
         public static Task<bool> ExistsAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, false, ExtractAsyncPocoColumnNameFs, null);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, false, ExtractAsyncPocoColumnNameFs);
             return self.ExistsAsync<T>(translated.Item1, translated.Item2);
         }
 
@@ -74,7 +74,7 @@ namespace StaTypPocoQueries.AsyncPoco {
         }
         
         public static Task<List<T>> FetchAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs, null);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs);
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
         }
  
@@ -88,7 +88,7 @@ namespace StaTypPocoQueries.AsyncPoco {
         public static Task<List<T>> FetchAsync<T>(
                 this AP.Database self, Translator.ConjunctionWord wrd, params FSharpExpr<FSharpFunc<T, bool>>[] queries) {
             
-            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, wrd, queries, true, ExtractAsyncPocoColumnNameFs, null);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, wrd, queries, true, ExtractAsyncPocoColumnNameFs);
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
         }
         
@@ -98,7 +98,7 @@ namespace StaTypPocoQueries.AsyncPoco {
         }
         
         public static Task<T> FirstAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs, null);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs);
             return self.FirstAsync<T>(translated.Item1, translated.Item2);
         }
 
@@ -108,7 +108,7 @@ namespace StaTypPocoQueries.AsyncPoco {
         }
         
         public static Task<T> SingleAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs, null);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs);
             return self.SingleAsync<T>(translated.Item1, translated.Item2);
         }
 
@@ -118,7 +118,7 @@ namespace StaTypPocoQueries.AsyncPoco {
         }
         
         public static Task<int> UpdateAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs, null);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs);
             return self.UpdateAsync<int>(translated.Item1, translated.Item2);
         }
     }
