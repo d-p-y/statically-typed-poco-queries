@@ -252,6 +252,44 @@ module Hlp =
 
     let getBody x = (x:Expression<Func<'T, bool>>).Body
 
+module ExpressionToSqlImpl =
+    let translateFsSingle<'T>
+            quoter
+            (conditions:Quotations.Expr<('T -> bool)>)
+            includeWhere
+            customNameExtractor
+            customParameterValueMap =
+
+        let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) -> x.Name)
+        let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
+
+        Hlp.translateOne quoter 
+            nameExtractor
+            parameterValueMap
+            (Hlp.getBody (LinqHelpers.conv conditions)) 
+            (Option.defaultValue true includeWhere)
+
+    let translateMultiple<'T>
+            quoter
+            separator
+            (conditions:Quotations.Expr<('T -> bool)>[])
+            includeWhere
+            customNameExtractor
+            customParameterValueMap =
+                
+        let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) -> x.Name)        
+        let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
+
+        let includeWhere = 
+            includeWhere
+            |> function
+            |Some false -> false
+            | _ -> true
+
+        Hlp.translateMultiple 
+            includeWhere quoter separator nameExtractor parameterValueMap conditions 
+            (fun x -> LinqHelpers.conv x |> Hlp.getBody)
+
 type ExpressionToSql =
     
     ///single Linq expression
@@ -286,37 +324,22 @@ type ExpressionToSql =
             conditions 
             Hlp.getBody
 
-    ///single F# quotation
-    static member Translate<'T>(quoter:Translator.IQuoter, conditions:Quotations.Expr<('T -> bool)>,
-            ?includeWhere, ?customNameExtractor : (System.Reflection.MemberInfo->string),
-            ?customParameterValueMap) =
-                    
-        let nameExtractor = customNameExtractor |> Option.defaultValue (fun x -> x.Name)        
-        let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
+    ///single F# quotation - this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters
+    static member Translate(quoter, conditions, ?includeWhere, ?customNameExtractor) =
+        ExpressionToSqlImpl.translateFsSingle 
+            quoter conditions includeWhere customNameExtractor None
 
-        Hlp.translateOne quoter 
-            nameExtractor
-            parameterValueMap
-            (Hlp.getBody (LinqHelpers.conv conditions)) 
-            (Option.defaultValue true includeWhere)
+    ///single F# quotation - full
+    static member Translate(quoter, conditions, includeWhere, customNameExtractor, customParameterValueMap) =
+        ExpressionToSqlImpl.translateFsSingle 
+            quoter conditions includeWhere customNameExtractor customParameterValueMap
 
-    ///multiple F# quotations
-    static member Translate<'T>(quoter:Translator.IQuoter, separator:Translator.ConjunctionWord, 
-            conditions:Quotations.Expr<('T -> bool)>[],
-            ?includeWhere, ?customNameExtractor : (System.Reflection.MemberInfo->string),
-            ?customParameterValueMap) =
-        
-        let nameExtractor = customNameExtractor |> Option.defaultValue (fun x -> x.Name)        
-        let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
+    ///multiple F# quotation - this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters
+    static member Translate(quoter, separator, conditions, ?includeWhere, ?customNameExtractor) =
+        ExpressionToSqlImpl.translateMultiple quoter separator conditions includeWhere customNameExtractor None
 
-        let includeWhere = 
-           includeWhere
-           |> function
-           |Some false -> false
-           | _ -> true
-
-        Hlp.translateMultiple 
-            includeWhere quoter separator nameExtractor parameterValueMap conditions 
-            (fun x -> LinqHelpers.conv x |> Hlp.getBody)
+    ///multiple F# quotations - full
+    static member Translate(quoter, separator, conditions, includeWhere, customNameExtractor, customParameterValueMap) =
+        ExpressionToSqlImpl.translateMultiple quoter separator conditions includeWhere customNameExtractor customParameterValueMap
 
     static member AsFsFunc (x:Func<_,_>) = fun y -> x.Invoke(y)
