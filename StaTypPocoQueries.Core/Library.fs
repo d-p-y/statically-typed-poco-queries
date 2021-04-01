@@ -133,7 +133,7 @@ module Translator =
             | _ -> failwithf "unsupported nodetype %A" body
 
         leftSql + oper + rightSql, curParams
-        
+
     let boolValueToWhereClause quote nameExtractor (body:MemberExpression) curParams isTrue = 
         let info = constantOrMemberAccessValue quote nameExtractor body
         (info.SqlProduce curParams) + (sprintf " = @%i" curParams.Length), (isTrue:obj)::curParams
@@ -159,6 +159,8 @@ module Translator =
         | None -> sql
         | Some parentJunction when parentJunction = junctionSql -> sql
         | _ -> sprintf "(%s)" sql
+    
+    let nullableType = typedefof<Nullable<_>>
 
     let rec comparisonToWhereClause 
             (quote:IQuoter) nameExtractor paramMap
@@ -167,8 +169,27 @@ module Translator =
         match body with
         | :? UnaryExpression as body when body.NodeType = ExpressionType.Not && body.Type = typeof<System.Boolean> ->
             match body.Operand with
+            | :? MemberExpression as expr when
+                    expr.NodeType = ExpressionType.MemberAccess && expr.Member.Name = "HasValue" &&
+                    expr.Member.DeclaringType.IsGenericType && expr.Member.DeclaringType.GetGenericTypeDefinition() = nullableType ->
+                    
+                match expr.Expression with
+                | :? MemberExpression as expr ->
+                    let info = constantOrMemberAccessValue quote nameExtractor expr
+                    (info.SqlProduce curSqlParams) + " IS NULL", List.appendIfSome info.Param curSqlParams
+                | _ -> failwithf "unsupported inner not memberExpression %A" expr.Expression
             | :? MemberExpression as body -> boolValueToWhereClause quote nameExtractor body curSqlParams false
             | _ -> failwithf "not condition has unexpected type %A" body
+        | :? MemberExpression as expr when
+                expr.NodeType = ExpressionType.MemberAccess && expr.Member.Name = "HasValue" &&
+                expr.Member.DeclaringType.IsGenericType && expr.Member.DeclaringType.GetGenericTypeDefinition() = nullableType ->
+                        
+            match expr.Expression with
+            | :? MemberExpression as expr ->
+                let info = constantOrMemberAccessValue quote nameExtractor expr
+                (info.SqlProduce curSqlParams) + " IS NOT NULL", List.appendIfSome info.Param curSqlParams
+            | _ -> failwithf "unsupported inner memberExpression %A" expr.Expression
+
         | :? MemberExpression as body when body.NodeType = ExpressionType.MemberAccess && body.Type = typeof<System.Boolean> ->
             boolValueToWhereClause quote nameExtractor body curSqlParams true
         | :? BinaryExpression as body -> 
@@ -186,7 +207,7 @@ module Translator =
                             let sql = sql |> sqlInBracketsIfNeeded parentJunction junctionSql
                             sql, parms
                         | None, Some sqlOper -> leafExpression quote nameExtractor paramMap expr sqlOper curSqlParams
-                        | _ -> failwith "expression is not a junction and not a supported leaf"
+                        | _ -> failwith "expression is not a junction and not a supported leaf"                    
                     | _ -> 
                         comparisonToWhereClause 
                             quote nameExtractor paramMap expr parentJunction curSqlParams

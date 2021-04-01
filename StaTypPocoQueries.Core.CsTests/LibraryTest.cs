@@ -144,6 +144,30 @@ namespace StaTypPocoQueries.Core.CsTests {
         }
 
         [Fact]
+        public void TestNullableIsNotNull() {
+            int? prm = 5;
+
+            AreEqual("WHERE @0 IS NOT NULL", new object[] {prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => prm.HasValue, true));
+
+            AreEqual("WHERE @0 IS NOT NULL AND <nullableInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => prm.HasValue && x.nullableInt == prm, true));
+
+            //AreEqual("WHERE @0 IS NOT NULL AND <nullableInt> = @1", new object[] { prm, prm },
+            //    ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => prm.HasValue && x.nullableInt.Value == prm, true));
+
+            AreEqual("WHERE @0 IS NULL", new object[] { prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue, true));
+
+            AreEqual("WHERE @0 IS NULL AND <nullableInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue && x.nullableInt == prm, true));
+
+            //AreEqual("WHERE @0 IS NULL AND <nullableInt> = @1", new object[] { prm, prm },
+            //    ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue && x.nullableInt.Value == prm, true));
+            
+        }
+
+        [Fact]
         public void TestEqualsNonNULLiteral() {
             var dt = new DateTime(2001, 2, 3);
             AreEqual("WHERE <aDate> = @0", new object[] {new DateTime(2001, 2, 3)},
