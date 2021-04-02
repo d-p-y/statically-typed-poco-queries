@@ -75,7 +75,12 @@ module Translator =
             Param = Some v
             Prop = None }
 
-    let rec constantOrMemberAccessValue (quote:IQuoter) nameExtractor (body:Expression) : LiteralType =
+    let extractImmediateValue body =
+        let unaryExpr = Expression.Convert(body, typeof<obj>)
+        let v = Expression.Lambda<Func<obj>>(unaryExpr).Compile()
+        v.Invoke()
+
+    let rec constantOrMemberAccessValue (quote:IQuoter) nameExtractor (body:Expression) =
         match (body.NodeType, body) with
         | ExpressionType.Constant, (:? ConstantExpression as body) -> 
             literalToSql body.Value
@@ -83,33 +88,30 @@ module Translator =
             constantOrMemberAccessValue quote nameExtractor body.Operand
         | ExpressionType.MemberAccess, (:? MemberExpression as body) ->
             match body.Expression with
-            | :? MemberExpression when 
+            | :? MemberExpression as me when 
                     body.Member.DeclaringType.IsGenericType && 
                     body.Member.DeclaringType.GetGenericTypeDefinition() = nullableType && 
                     body.Member.Name = "Value" ->
 
-                constantOrMemberAccessValue quote nameExtractor body.Expression
+                constantOrMemberAccessValue quote nameExtractor me
             | :? ParameterExpression ->
-                //maybe name is expected
-                match body.Member.GetType().Name with
-                |"RtFieldInfo"|"MonoField" -> 
-                    let unaryExpr = Expression.Convert(body, typeof<obj>)
-                    let v = Expression.Lambda<Func<obj>>(unaryExpr).Compile()
-                    literalToSql (v.Invoke ())
-                |"RuntimePropertyInfo"|"MonoProperty" -> 
+                match body.Member with
+                | :? System.Reflection.PropertyInfo as pi -> 
                     {
                         LiteralType.IsNull = false
                         SqlProduce = (fun _ -> quote.QuoteColumn (nameExtractor body.Member))
                         Param = None
-                        Prop = Some (body.Member :?> System.Reflection.PropertyInfo)
+                        Prop = Some (pi)
                     }
-                |_ as name -> failwithf "unsupported member type name %s" name
-            |_ ->
-                //constant is expected
-                let unaryExpr = Expression.Convert(body, typeof<obj>)
-                let v = Expression.Lambda<Func<obj>>(unaryExpr).Compile()
-                literalToSql (v.Invoke ())
-        | _ -> failwithf "unsupported nodetype %A" body   
+                | :? System.Reflection.FieldInfo ->
+                    body |> extractImmediateValue |> literalToSql
+                |_ -> failwithf "constantOrMemberAccessValue->MemberAccess->ParameterExpression unsupported expression %A" body.Expression
+            | x when x.NodeType = ExpressionType.Constant ->
+                body |> extractImmediateValue |> literalToSql
+            | :? MemberExpression ->
+                body |> extractImmediateValue |> literalToSql
+            |_ -> failwithf "constantOrMemberAccessValue->MemberAccess unsupported expression %A" body.Expression
+        | _ -> failwithf "constantOrMemberAccessValue unsupported nodetype %A" body   
 
     let leafExpression quote nameExtractor paramValueMap (body:BinaryExpression) sqlOperator curParams =
         let left = constantOrMemberAccessValue quote nameExtractor body.Left 
