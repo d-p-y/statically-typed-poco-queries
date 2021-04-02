@@ -137,9 +137,8 @@ module Translator =
             match right.IsNull, body.NodeType with
             | true, ExpressionType.NotEqual -> " IS NOT "
             | true, ExpressionType.Equal -> " IS "
-            | false, _ -> sprintf " %s " sqlOperator
-            | _ -> failwithf "unsupported nodetype %A" body
-
+            | _ -> sprintf " %s " sqlOperator
+            
         leftSql + oper + rightSql, curParams
 
     let boolValueToWhereClause quote nameExtractor (body:MemberExpression) curParams isTrue = 

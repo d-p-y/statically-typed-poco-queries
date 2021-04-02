@@ -199,7 +199,69 @@ namespace StaTypPocoQueries.AsyncPoco.CsTests {
                 Assert.Equal(inp2, await db.SingleAsync<SomeEntity>(x => x.AnInt == 5));
             });
         }
-        
+
+        [Theory]
+        [MemberData(nameof(DbProviders))]
+        public async void MultipleLinqConditions(IRunner runner) {
+            
+            var inp1 = new SomeEntity {
+                AnInt = 5
+            };
+            var inp2 = new SomeEntity {
+                AnInt = 6
+            };
+            var inp3 = new SomeEntity {
+                AnInt = 7
+            };
+            var inp4 = new SomeEntity {
+                AnInt = 8
+            };
+            var inp5 = new SomeEntity {
+                AnInt = 9
+            };
+
+            await runner.Run(_logger, async db => {
+                await db.InsertAsync(inp1);
+                await db.InsertAsync(inp2);
+                await db.InsertAsync(inp3);
+                await db.InsertAsync(inp4);
+                await db.InsertAsync(inp5);
+
+                {
+                    int? minVal = 6;
+                    int? maxVal = 8;
+
+                    var outp = await db.FetchAsync<SomeEntity>(Translator.ConjunctionWord.And,
+                        x => !minVal.HasValue || x.AnInt >= minVal.Value,
+                        x => !maxVal.HasValue || x.AnInt <= maxVal.Value);
+
+                    Assert.Equal(new[] { 6, 7, 8 }, outp.Select(x => x.AnInt).OrderBy(x => x));
+                }
+                
+                {
+                    int? minVal = null;
+                    int? maxVal = 8;
+
+                    var outp = await db.FetchAsync<SomeEntity>(Translator.ConjunctionWord.And,
+                        x => !minVal.HasValue || x.AnInt >= minVal.Value,
+                        x => !maxVal.HasValue || x.AnInt <= maxVal.Value);
+
+                    Assert.Equal(new[] { 5, 6, 7, 8 }, outp.Select(x => x.AnInt).OrderBy(x => x));
+                }
+
+                {
+                    int? minVal = 7;
+                    int? maxVal = null;
+
+                    var outp = await db.FetchAsync<SomeEntity>(Translator.ConjunctionWord.And,
+                        x => !minVal.HasValue || x.AnInt >= minVal.Value,
+                        x => !maxVal.HasValue || x.AnInt <= maxVal.Value);
+
+                    Assert.Equal(new[] { 7, 8, 9 }, outp.Select(x => x.AnInt).OrderBy(x => x));
+                }
+            });
+        }
+
         [Theory]
         [MemberData(nameof(DbProviders))]
         public async void ColumnNameInAttribute(IRunner runner) {

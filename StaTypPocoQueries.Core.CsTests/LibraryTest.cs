@@ -144,20 +144,26 @@ namespace StaTypPocoQueries.Core.CsTests {
         }
 
         [Fact]
-        public void TestNullableIsNotNull() {
+        public void TestNullableHasValue() {
             int? prm = 5;
+
+            AreEqual("WHERE <nullableInt> IS NOT NULL", new object[] { },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => x.nullableInt.HasValue, true));
+
+            AreEqual("WHERE <nullableInt> IS NULL", new object[] { },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !x.nullableInt.HasValue, true));
 
             AreEqual("WHERE @0 IS NOT NULL", new object[] {prm },
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => prm.HasValue, true));
 
-            AreEqual("WHERE @0 IS NOT NULL AND <nullableInt> = @1", new object[] { prm, prm },
-                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => prm.HasValue && x.nullableInt == prm, true));
-            
             AreEqual("WHERE @0 IS NULL", new object[] { prm },
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue, true));
 
-            AreEqual("WHERE @0 IS NULL AND <nullableInt> = @1", new object[] { prm, prm },
-                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue && x.nullableInt == prm, true));
+            AreEqual("WHERE @0 IS NOT NULL AND <nullableInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => prm.HasValue && x.nullableInt == prm, true));
+            
+            AreEqual("WHERE @0 IS NULL OR <nullableInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue || x.nullableInt == prm, true));
         }
 
         [Fact]
@@ -172,10 +178,27 @@ namespace StaTypPocoQueries.Core.CsTests {
             
             AreEqual("WHERE @0 IS NULL OR <nullableInt> = @1", new object[] { prm, prm },
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue || x.nullableInt.Value == prm, true));
+
+            AreEqual("WHERE @0 IS NULL OR <nullableInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue || x.nullableInt.Value == prm.Value, true));
+
+            AreEqual("WHERE @0 IS NULL OR <nullableInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue || x.nullableInt == prm, true));
+
+            AreEqual("WHERE @0 IS NULL OR <anInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue || x.anInt == prm, true));
+
+            AreEqual("WHERE @0 IS NULL OR <anInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue || x.anInt == prm.Value, true));
+
+            string str = "1122";
+
+            AreEqual("WHERE @0 IS NULL OR <aString> = @1", new object[] { str, str },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => str == null || x.aString == str, true));
         }
 
         [Fact]
-        public void TestEqualsNonNULLiteral() {
+        public void TestEqualsSomeLiteral() {
             var dt = new DateTime(2001, 2, 3);
             AreEqual("WHERE <aDate> = @0", new object[] {new DateTime(2001, 2, 3)},
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => x.aDate == dt));
@@ -218,6 +241,18 @@ namespace StaTypPocoQueries.Core.CsTests {
                     new Expression<Func<SomeEntity, bool>>[] {
                         x => x.anInt == 1 || x.aLong == 3L,
                         x => x.aString == "123"
+                    }));
+
+            DateTime? dtFrom = null;
+            DateTime? dtTo = new DateTime(2001,2,3);
+
+            AreEqual("WHERE (NULL IS NULL OR <aDate> >= NULL) AND (@0 IS NULL OR <aDate> <= @1)", new object[] { dtTo, dtTo },
+                ExpressionToSql.Translate(
+                    TestQuoter.Instance,
+                    Translator.ConjunctionWord.And,
+                    new Expression<Func<SomeEntity, bool>>[] {
+                        x => !dtFrom.HasValue || x.aDate >= dtFrom,
+                        x => !dtTo.HasValue || x.aDate <= dtTo
                     }));
         }
 
