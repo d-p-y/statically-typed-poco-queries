@@ -152,19 +152,26 @@ namespace StaTypPocoQueries.Core.CsTests {
 
             AreEqual("WHERE @0 IS NOT NULL AND <nullableInt> = @1", new object[] { prm, prm },
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => prm.HasValue && x.nullableInt == prm, true));
-
-            //AreEqual("WHERE @0 IS NOT NULL AND <nullableInt> = @1", new object[] { prm, prm },
-            //    ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => prm.HasValue && x.nullableInt.Value == prm, true));
-
+            
             AreEqual("WHERE @0 IS NULL", new object[] { prm },
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue, true));
 
             AreEqual("WHERE @0 IS NULL AND <nullableInt> = @1", new object[] { prm, prm },
                 ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue && x.nullableInt == prm, true));
+        }
 
-            //AreEqual("WHERE @0 IS NULL AND <nullableInt> = @1", new object[] { prm, prm },
-            //    ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue && x.nullableInt.Value == prm, true));
+        [Fact]
+        public void TestNullableValueIs() {
+            int? prm = 5;
             
+            AreEqual("WHERE <nullableInt> = @0", new object[] { prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => x.nullableInt.Value == prm, true));
+
+            AreEqual("WHERE @0 IS NOT NULL AND <nullableInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => prm.HasValue && x.nullableInt.Value == prm, true));
+            
+            AreEqual("WHERE @0 IS NULL OR <nullableInt> = @1", new object[] { prm, prm },
+                ExpressionToSql.Translate<SomeEntity>(TestQuoter.Instance, x => !prm.HasValue || x.nullableInt.Value == prm, true));
         }
 
         [Fact]
