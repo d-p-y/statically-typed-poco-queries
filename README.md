@@ -11,8 +11,8 @@ Given one has following entity defined:
 [PrimaryKey("id")]
 [ExplicitColumns] 
 class SomeEntity {
-	[Column] public int Id { get; set; }
-	[Column] public string SomeColumn { get; set; }
+    [Column] public int Id { get; set; }
+    [Column] public string SomeColumn { get; set; }
 }
 ```
 
@@ -37,10 +37,10 @@ using StaTypPocoQueries.AsyncPoco;
 [PrimaryKey("id")]
 [ExplicitColumns] 
 class SomeEntity {
-	[Column] public int Id { get; set; }
-	[Column] public string SomeColumn { get; set; }
-  [Column] public int anInt { get; set; }
-  [Column] public int? nullableInt { get; set; }
+    [Column] public int Id { get; set; }
+    [Column] public string SomeColumn { get; set; }
+    [Column] public int anInt { get; set; }
+    [Column] public int? nullableInt { get; set; }
 }
 
 class YourDataAccessLayer {
