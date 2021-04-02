@@ -162,71 +162,63 @@ module Translator =
     
     let nullableType = typedefof<Nullable<_>>
 
-    let rec comparisonToWhereClause 
-            (quote:IQuoter) nameExtractor paramMap
-            (body:Expression) parentJunction curSqlParams = 
+    type SupportedExpression = 
+    |NullableHasValue of bool * MemberExpression
+    |EqualsBool of bool * MemberExpression
+    |LogicalJunction of sqlJunction : string * BinaryExpression
+    |Comparison of sqlComparison : string * BinaryExpression
 
-        match body with
-        | :? UnaryExpression as body when body.NodeType = ExpressionType.Not && body.Type = typeof<System.Boolean> ->
-            match body.Operand with
-            | :? MemberExpression as expr when
-                    expr.NodeType = ExpressionType.MemberAccess && expr.Member.Name = "HasValue" &&
-                    expr.Member.DeclaringType.IsGenericType && expr.Member.DeclaringType.GetGenericTypeDefinition() = nullableType ->
-                    
-                match expr.Expression with
-                | :? MemberExpression as expr ->
-                    let info = constantOrMemberAccessValue quote nameExtractor expr
-                    (info.SqlProduce curSqlParams) + " IS NULL", List.appendIfSome info.Param curSqlParams
-                | _ -> failwithf "unsupported inner not memberExpression %A" expr.Expression
-            | :? MemberExpression as body -> boolValueToWhereClause quote nameExtractor body curSqlParams false
-            | _ -> failwithf "not condition has unexpected type %A" body
+    let rec asMaybeSupportedExpression (negated:bool) (input:Expression) =
+        match input with
+        | :? UnaryExpression as expr when expr.NodeType = ExpressionType.Not && expr.Type = typeof<System.Boolean> ->
+            asMaybeSupportedExpression (not negated) expr.Operand
+            
         | :? MemberExpression as expr when
                 expr.NodeType = ExpressionType.MemberAccess && expr.Member.Name = "HasValue" &&
                 expr.Member.DeclaringType.IsGenericType && expr.Member.DeclaringType.GetGenericTypeDefinition() = nullableType ->
-                        
+            
             match expr.Expression with
-            | :? MemberExpression as expr ->
-                let info = constantOrMemberAccessValue quote nameExtractor expr
-                (info.SqlProduce curSqlParams) + " IS NOT NULL", List.appendIfSome info.Param curSqlParams
-            | _ -> failwithf "unsupported inner memberExpression %A" expr.Expression
+            | :? MemberExpression as expr -> NullableHasValue(negated,expr) |> Some
+            | _ -> None
+        | :? MemberExpression as expr when expr.NodeType = ExpressionType.MemberAccess && expr.Type = typeof<System.Boolean> ->
+            EqualsBool(negated, expr) |> Some
 
-        | :? MemberExpression as body when body.NodeType = ExpressionType.MemberAccess && body.Type = typeof<System.Boolean> ->
-            boolValueToWhereClause quote nameExtractor body curSqlParams true
         | :? BinaryExpression as body -> 
-            match junctionToSqlOper body with
-            | Some junctionSql ->
-                let consumeExpr (expr:Expression) (curSqlParams:_ list) = 
-                    match expr with
-                    | :? BinaryExpression as expr ->
-                        match junctionToSqlOper expr, binExpToSqlOper expr with
-                        | Some _, None -> 
-                            let sql, parms = 
-                                comparisonToWhereClause 
-                                    quote nameExtractor paramMap expr (Some junctionSql) curSqlParams
+            match junctionToSqlOper body, binExpToSqlOper body with
+            | Some junctionOper, None -> LogicalJunction (junctionOper, body) |> Some
+            | None, Some cmpOper -> Comparison(cmpOper, body) |> Some
+            | _ -> None
+        | _ -> None
 
-                            let sql = sql |> sqlInBracketsIfNeeded parentJunction junctionSql
-                            sql, parms
-                        | None, Some sqlOper -> leafExpression quote nameExtractor paramMap expr sqlOper curSqlParams
-                        | _ -> failwith "expression is not a junction and not a supported leaf"                    
-                    | _ -> 
-                        comparisonToWhereClause 
-                            quote nameExtractor paramMap expr parentJunction curSqlParams
+    let rec comparisonToWhereClause 
+            (quote:IQuoter) nameExtractor paramMap
+            (expr:Expression) parentJunction curSqlParams = 
 
-                let lSql, curSqlParams = consumeExpr body.Left curSqlParams
-                let rSql, curSqlParams = consumeExpr body.Right curSqlParams
+        expr
+        |> asMaybeSupportedExpression false
+        |> function
+        | None -> failwithf "unsupported expression %A" expr
+        | Some(expr) ->
+            expr
+            |> function
+            | NullableHasValue(negate, expr) ->
+                let negate = if negate then "" else "NOT " //HasValue() means "is NOT null"
+                let info = constantOrMemberAccessValue quote nameExtractor expr
+                (info.SqlProduce curSqlParams) + " IS " + negate + "NULL", List.appendIfSome info.Param curSqlParams
+            | EqualsBool(negate, expr) ->
+                not negate // "x => someBool" has negate==false
+                |> boolValueToWhereClause quote nameExtractor expr curSqlParams
+            | Comparison(cmpSql, expr) -> 
+                leafExpression quote nameExtractor paramMap expr cmpSql curSqlParams
+            | LogicalJunction(junctionSql, expr) ->
+                let lSql, curSqlParams = comparisonToWhereClause quote nameExtractor paramMap expr.Left (Some junctionSql) curSqlParams
+                let rSql, curSqlParams = comparisonToWhereClause quote nameExtractor paramMap expr.Right (Some junctionSql) curSqlParams
                 
-                let sql = sprintf "%s %s %s" lSql junctionSql rSql
                 let sql = 
-                    match parentJunction with
-                    | Some parentJunction when parentJunction <> junctionSql -> sprintf "(%s)" sql
-                    | _ -> sql
-                sql, curSqlParams
+                    sprintf "%s %s %s" lSql junctionSql rSql
+                    |> sqlInBracketsIfNeeded parentJunction junctionSql
 
-            | None -> 
-                match binExpToSqlOper body with
-                | Some sqlOper -> leafExpression quote nameExtractor paramMap body sqlOper curSqlParams
-                | None -> failwithf "unsupported operator %A in leaf" body.NodeType
-        | _ -> failwithf "conditions has unexpected type %A" body
+                sql, curSqlParams
 
 module LinqHelpers =
     //thanks Daniel
