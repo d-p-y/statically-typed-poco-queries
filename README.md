@@ -126,10 +126,19 @@ I think so. There are plenty of tests for both the [translator](https://github.c
   db.MethodNeedingQuery<SomeEntity>("([anInt] = @0 or [SomeColumn] = @1) and ([anInt] = @2 or [SomeColumn] = @3)", new [] {6,"foo",4,"bar"})
   ```
 
- * 'Nullable<T>.HasVersion and Nullable<T>.Version'  
+ * 'Nullable<T>.HasValue and Nullable<T>.Value'  
    ```csharp
    db.MethodNeedingQuery<SomeEntity>(x => !x.nullableInt.HasValue || x.nullableInt.Value == 5)
 
    //...is translated to:
    db.MethodNeedingQuery<SomeEntity>("[nullableInt] IS NULL OR [nullableInt] = @0", new []{5})
    ```
+
+* Array.Contains(item) translated into native array without expanding array into as many parameters as there is in collection. It is optional feature. Needs support from both *Poco library and underlying database client library.
+  ```csharp
+    var neededStrs = new[] { "foo2", "foo1" };
+    db.MethodNeedingQuery<SomeEntity>(x => neededStrs.Contains(x.AString));
+  ```
+  for more info:
+  * see [tests](https://github.com/d-p-y/statically-typed-poco-queries/blob/master/StaTypPocoQueries.AsyncPocoDpy.Tests/AsyncPocoDpyWrapperArrayTests.cs) for more info about usage
+  * [my fork of AsyncPoco that supports it](https://github.com/d-p-y/AsyncPoco)
