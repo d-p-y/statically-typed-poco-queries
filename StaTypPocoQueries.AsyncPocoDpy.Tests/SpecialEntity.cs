@@ -10,14 +10,14 @@ namespace StaTypPocoQueries.AsyncPocoDpy.Tests {
     /// Persisted objects are compared by id (comparison "by" reference). 
     /// Non persisted are value objects and thus its equalities of its properties is checked.
     /// </summary>
-    [TableName("SpecialEntity")]
-	[PrimaryKey("id")]
+    [TableName("specialentity")] //lowercase for postgresql compatibility
+    [PrimaryKey("id")]
 	[ExplicitColumns] 
     class SpecialEntity {
-        [Column] public int Id { get; set; }
-        [Column] public int Table { get; set; } 
-        [Column] public string Create { get; set; }
-        [Column] public int? Null { get; set; }
+        [Column("id")] public int Id { get; set; }
+        [Column("table")] public int Table { get; set; } 
+        [Column("create")] public string Create { get; set; }
+        [Column("null")] public int? Null { get; set; }
 
         public override int GetHashCode() {
             if (Id != 0) {

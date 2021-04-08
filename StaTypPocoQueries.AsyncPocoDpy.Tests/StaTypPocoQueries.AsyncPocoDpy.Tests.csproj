@@ -12,10 +12,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AsyncPocoDpy" Version="1.0.0" />
-    <PackageReference Include="DisposableSoftwareContainer.Docker" Version="1.4.0" />
+    <PackageReference Include="AsyncPocoDpy" Version="2.0.2.1" />
     <PackageReference Include="FSharp.Core" Version="4.5.4" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="2.1.0" />
+    <PackageReference Include="Npgsql" Version="5.0.4" />
     <PackageReference Include="System.Data.SqlClient" Version="4.5.1" />
     <PackageReference Include="xunit" Version="2.3.1" />
     <PackageReference Include="xunit.runner.console" Version="2.4.1">

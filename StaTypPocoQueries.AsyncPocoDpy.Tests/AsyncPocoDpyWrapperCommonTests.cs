@@ -1,4 +1,4 @@
-﻿//Copyright © 2018 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
+﻿//Copyright © 2021 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
 
 using System;
 using System.Collections.Generic;
@@ -7,20 +7,18 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace StaTypPocoQueries.AsyncPocoDpy.Tests {
-    public class AsyncPocoDpyWrapperTest {
+    public class AsyncPocoDpyWrapperCommonTests {
         private readonly Action<string> _logger;
 
-        public AsyncPocoDpyWrapperTest(ITestOutputHelper hlp) {
+        public AsyncPocoDpyWrapperCommonTests(ITestOutputHelper hlp) {
             _logger = hlp.WriteLine;
         }
 
-        // ReSharper disable once UnusedMethodReturnValue.Local: it is used in MemberData
-        public static IEnumerable<object[]> DbProviders() {
-            return new [] {
-                new object[] {new SqlServerInDockerRunner()},
-                new object[] {new SqliteRunner()}
-            };
-        }
+        public static IEnumerable<object[]> DbProviders() => new[] {
+            new object[] {new PostgreSqlRunner()},
+            new object[] {new SqliteRunner()},
+            new object[] {new SqlServerRunner()}
+        };
 
         [Theory]
         [MemberData(nameof(DbProviders))]
@@ -109,7 +107,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy.Tests {
                 Assert.Equal(new List<SomeEntity> {inp}, outp);
             });
         }
-        
+
         [Theory]
         [MemberData(nameof(DbProviders))]
         public async void SimpleExistsTest(IRunner runner) {

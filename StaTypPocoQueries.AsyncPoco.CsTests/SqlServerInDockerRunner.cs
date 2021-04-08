@@ -1,22 +1,16 @@
 ﻿//Copyright © 2018 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
 
 using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncPoco;
-using DisposableSoftwareContainer;
 using Microsoft.FSharp.Core;
 
 namespace StaTypPocoQueries.AsyncPoco.CsTests {
-    public class SqlServerInDockerRunner : IRunner {
+    public class SqlServerRunner : IRunner {
         private string DbName => "testingdb";
         
         //resharper shadow copy workaround thanks to mcdon
@@ -42,30 +36,24 @@ namespace StaTypPocoQueries.AsyncPoco.CsTests {
 	            CONSTRAINT PK_SpecialEntity PRIMARY KEY CLUSTERED (id))"};
         
         public async Task Run(Action<string> logger, Func<Database,Task> testBody) {
-            var fsLog = FSharpOption<Action<string>>.Some(logger);
-            
-            var dockerFileFolder = Path.Combine(DllsPath, @"..\..\..\SqlServerInDocker");
-            const string saPasswd = "somePASSWD12345"; //present in build.args file
-            const int serverPort = 1433;
+            var connStr =
+                Environment.GetEnvironmentVariable("TEST_SQLSERVER_CONNECTIONSTRING")
+                ??
+                @"Data Source=localhost\sqlexpress;Initial Catalog=master;Trusted_Connection=True;Connection Timeout=2;TrustServerCertificate=True";
 
-            //Sql Server images are huge at this moment, not cleaning same image over and over saves 5s per test
-            var cl = FSharpOption<Docker.CleanMode>.Some(Docker.CleanMode.ContainerOnly);
+            logger($"Using connection string {connStr}");
 
-            using (var sqlServerCont = new Docker.AutostartedDockerContainer(dockerFileFolder,logger:fsLog,cleanMode:cl)) {
-                var connStr = $"Data Source={sqlServerCont.IpAddress},{serverPort};Initial Catalog=master;Trusted_Connection=False;User=sa;Password={saPasswd};Connection Timeout=2;TrustServerCertificate=True";
-                logger($"Using connection string {connStr}");
-
-                var sqlConn = Attempt(logger, () => {
-                    var result = new SqlConnection(connStr);
-                    result.Open();
-                    return result;
-                });
-                
+            using (var sqlConn = Attempt(logger, () => {
+                var result = new SqlConnection(connStr);
+                result.Open();
+                return result;
+            })) {
+                ExecuteNonQuery(sqlConn, $"IF DB_ID('{DbName}') IS NOT NULL begin drop database {DbName} end");
                 ExecuteNonQuery(sqlConn, $"create database {DbName}");
                 ExecuteNonQuery(sqlConn, $"use {DbName}");
 
                 Array.ForEach(SqlCreateTestTable, x => ExecuteNonQuery(sqlConn, x));
-                
+
                 using (var asyncPocoDb = new Database(sqlConn)) {
                     await testBody(asyncPocoDb);
                 }

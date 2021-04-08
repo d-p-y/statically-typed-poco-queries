@@ -2,15 +2,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 using Xunit;
-using AsyncPoco;
-using DisposableSoftwareContainer;
-using Microsoft.FSharp.Core;
 using StaTypPocoQueries.Core;
 using Xunit.Abstractions;
 
@@ -23,13 +16,11 @@ namespace StaTypPocoQueries.AsyncPoco.CsTests {
         }
 
         // ReSharper disable once UnusedMethodReturnValue.Local: it is used in MemberData
-        public static IEnumerable<object[]> DbProviders() {
-            return new [] {
-                new object[] {new SqlServerInDockerRunner()},
-                new object[] {new SqliteRunner()}
-            };
-        }
-
+        public static IEnumerable<object[]> DbProviders() => new [] {
+            new object[] {new SqlServerRunner()},
+            new object[] {new SqliteRunner()}
+        };
+        
         [Theory]
         [MemberData(nameof(DbProviders))]
         public async void FetchNothingWorksTest(IRunner runner) {
