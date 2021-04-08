@@ -1,22 +1,14 @@
-﻿//Copyright © 2018 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
+﻿//Copyright © 2021 Dominik Pytlewski. Licensed under Apache License 2.0. See LICENSE file for details
 
 using System;
 using System.Data.SqlClient;
-using System.IO;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncPoco;
-using Microsoft.FSharp.Core;
 
 namespace StaTypPocoQueries.AsyncPoco.CsTests {
     public class SqlServerRunner : IRunner {
         private string DbName => "testingdb";
-        
-        //resharper shadow copy workaround thanks to mcdon
-        // http://stackoverflow.com/questions/16231084/resharper-runs-unittest-from-different-location
-        private static string DllsPath {get; } =
-            Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
         
         private static string[] SqlCreateTestTable = {
             @"create table SomeEntity (
