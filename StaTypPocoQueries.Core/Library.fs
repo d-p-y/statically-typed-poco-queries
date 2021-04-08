@@ -48,6 +48,8 @@ module Translator =
 
     type SqlParams = obj list
 
+    type SqlAndParams = string * SqlParams
+
     type LiteralType = {
         IsNull : bool
         SqlProduce : SqlParams->string
@@ -60,7 +62,11 @@ module Translator =
             |Some p, Some mapper -> {this with Param = Some (mapper p)}
             |_ -> this
     
+    ///input: itemSqlFragment; collectionSqlFragment. Returns sql fragment
+    type ItemInCollectionImpl = delegate of (string * string) -> string
+
     let nullableType = typedefof<Nullable<_>>
+    let linqEnumerableType = typedefof<System.Linq.Enumerable>
 
     let literalToSql (v:obj) =
         match v with
@@ -174,9 +180,23 @@ module Translator =
     |EqualsBool of bool * MemberExpression
     |LogicalJunction of sqlJunction : string * BinaryExpression
     |Comparison of sqlComparison : string * BinaryExpression
+    |ItemInCollection of item:Expression * coll:Expression
 
     let rec asMaybeSupportedExpression (negated:bool) (input:Expression) =
         match input with
+        | :? MethodCallExpression as expr when 
+                expr.NodeType = ExpressionType.Call && expr.Method.DeclaringType = linqEnumerableType && expr.Method.Name= "Contains" && 
+                expr.Arguments.Count = 2 ->
+
+            let memberOrConstant x =
+                match (x:Expression) with
+                | :? MemberExpression -> Some x
+                | :? ConstantExpression -> Some x
+                | _ -> None
+
+            match memberOrConstant expr.Arguments.[1], memberOrConstant expr.Arguments.[0] with 
+            | Some itm, Some coll -> ItemInCollection(itm, coll) |> Some
+            | _ -> None
         | :? UnaryExpression as expr when expr.NodeType = ExpressionType.Not && expr.Type = typeof<System.Boolean> ->
             asMaybeSupportedExpression (not negated) expr.Operand
             
@@ -198,7 +218,7 @@ module Translator =
         | _ -> None
 
     let rec comparisonToWhereClauseImpl
-            (quote:IQuoter) nameExtractor paramMap
+            (quote:IQuoter) nameExtractor paramMap itemInCollGenerator
             (expr:Expression) parentJunction curSqlParams = 
 
         expr
@@ -218,17 +238,33 @@ module Translator =
             | Comparison(cmpSql, expr) -> 
                 leafExpression quote nameExtractor paramMap expr cmpSql curSqlParams
             | LogicalJunction(junctionSql, expr) ->
-                let lSql, curSqlParams = comparisonToWhereClauseImpl quote nameExtractor paramMap expr.Left (Some junctionSql) curSqlParams
-                let rSql, curSqlParams = comparisonToWhereClauseImpl quote nameExtractor paramMap expr.Right (Some junctionSql) curSqlParams
+                let lSql, curSqlParams = 
+                    comparisonToWhereClauseImpl quote nameExtractor paramMap itemInCollGenerator expr.Left (Some junctionSql) curSqlParams
+                let rSql, curSqlParams = 
+                    comparisonToWhereClauseImpl quote nameExtractor paramMap itemInCollGenerator expr.Right (Some junctionSql) curSqlParams
                 
                 let sql = 
                     sprintf "%s %s %s" lSql junctionSql rSql
                     |> sqlInBracketsIfNeeded parentJunction junctionSql
 
                 sql, curSqlParams
+            | ItemInCollection(itm, coll) ->
+                let itm = constantOrMemberAccessValue quote nameExtractor itm
+                let coll = constantOrMemberAccessValue quote nameExtractor coll
 
-    let comparisonToWhereClause quote nameExtractor paramMap (expr:Expression<Func<'T,bool>>) parentJunction curSqlParams =
-        comparisonToWhereClauseImpl quote nameExtractor paramMap expr.Body parentJunction curSqlParams
+                match itemInCollGenerator with
+                | None -> failwithf "item-in-collection syntax not supported because itemInCollGenerator is not provided"
+                | Some itemInCollGenerator ->
+                    let itmSql = itm.SqlProduce curSqlParams
+                    let curSqlParams = curSqlParams |> List.appendIfSome itm.Param
+
+                    let collSql = coll.SqlProduce curSqlParams
+                    let curSqlParams = curSqlParams |> List.appendIfSome coll.Param
+                                        
+                    itemInCollGenerator itmSql collSql, curSqlParams
+                
+    let comparisonToWhereClause quote nameExtractor paramMap itemInCollGenerator (expr:Expression<Func<'T,bool>>) parentJunction curSqlParams =
+        comparisonToWhereClauseImpl quote nameExtractor paramMap itemInCollGenerator expr.Body parentJunction curSqlParams
 
 module LinqHelpers =
     //thanks Daniel
@@ -240,21 +276,21 @@ module LinqHelpers =
         Expression.Lambda<Func<'T, bool>>(lambda.Body, lambda.Parameters)
 
 module Hlp =
-    let translateOne quoter nameExtractor paramValueExtractor conditions includeWhere =
+    let translateOne quoter nameExtractor paramValueExtractor itemInCollGenerator conditions includeWhere =
         let sql, parms = 
             Translator.comparisonToWhereClause 
-                quoter nameExtractor paramValueExtractor conditions None List.empty
+                quoter nameExtractor paramValueExtractor itemInCollGenerator conditions None List.empty
         let where = if includeWhere then "WHERE " else ""
         new Tuple<_,_>(where + sql, parms |> List.rev |> Array.ofList)
 
-    let translateMultiple includeWhere quoter separator nameExtractor paramValueExtractor conditions =
+    let translateMultiple includeWhere quoter separator nameExtractor paramValueExtractor itemInCollGenerator conditions =
         let queries, prms =
             conditions
             |> Array.fold
                 (fun (queries,prms) condition -> 
                     let query, prms = 
                         Translator.comparisonToWhereClause 
-                            quoter nameExtractor paramValueExtractor condition None prms
+                            quoter nameExtractor paramValueExtractor itemInCollGenerator condition None prms
                     (sprintf "(%s)" query)::queries, prms)
                 (List.empty, List.empty)
  
@@ -273,13 +309,27 @@ module Hlp =
         then (fun _ x -> x)
         else (fun pi inp -> customParameterValueMap.Invoke(pi,inp) )
 
+    let iicgToOptFun (itemInCollGenerator:Translator.ItemInCollectionImpl) =
+        if itemInCollGenerator = null
+        then None
+        else  
+            (fun (itm:string) (coll:string) -> itemInCollGenerator.Invoke(itm, coll)) |> Some
+
+    let optionalIicgToOptFun itemInCollGenerator =
+        match itemInCollGenerator with
+        | Some itemInCollGenerator ->
+            (fun (itm:string) (coll:string) -> 
+                (itemInCollGenerator:Translator.ItemInCollectionImpl).Invoke(itm, coll)) |> Some
+        |_ -> None
+
 module ExpressionToSqlImpl =
     let translateFsSingle<'T>
             quoter
             (conditions:Quotations.Expr<('T -> bool)>)
             includeWhere
             customNameExtractor
-            customParameterValueMap =
+            customParameterValueMap 
+            itemInCollGenerator =
 
         let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) -> x.Name)
         let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
@@ -287,6 +337,7 @@ module ExpressionToSqlImpl =
         Hlp.translateOne quoter 
             nameExtractor
             parameterValueMap
+            (Hlp.optionalIicgToOptFun itemInCollGenerator)
             (LinqHelpers.conv conditions)
             (Option.defaultValue true includeWhere)
 
@@ -296,7 +347,8 @@ module ExpressionToSqlImpl =
             (conditions:Quotations.Expr<('T -> bool)>[])
             includeWhere
             customNameExtractor
-            customParameterValueMap =
+            customParameterValueMap 
+            itemInCollGenerator =
                 
         let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) -> x.Name)        
         let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
@@ -312,7 +364,9 @@ module ExpressionToSqlImpl =
             |> Array.map LinqHelpers.conv
 
         Hlp.translateMultiple 
-            includeWhere quoter separator nameExtractor parameterValueMap conditions
+            includeWhere 
+            quoter separator nameExtractor parameterValueMap 
+            (Hlp.optionalIicgToOptFun itemInCollGenerator) conditions
             
 type ExpressionToSql =
     
@@ -322,11 +376,14 @@ type ExpressionToSql =
             [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,string>)>]
                 customNameExtractor,
             [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,obj,obj>)>] 
-                customParameterValueMap) =
+                customParameterValueMap,
+            [<Optional; DefaultParameterValue(null:Translator.ItemInCollectionImpl)>] 
+                itemInCollGenerator) =
         
         Hlp.translateOne quoter 
             (Hlp.cneToFun customNameExtractor)
             (Hlp.cpvmToFun customParameterValueMap)
+            (Hlp.iicgToOptFun itemInCollGenerator)
             conditions
             includeWhere 
 
@@ -337,7 +394,9 @@ type ExpressionToSql =
             [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,string>)>]
                 customNameExtractor,
             [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,obj,obj>)>] 
-                customParameterValueMap) = 
+                customParameterValueMap,
+            [<Optional; DefaultParameterValue(null:Translator.ItemInCollectionImpl)>] 
+                itemInCollGenerator) = 
         
         Hlp.translateMultiple 
             includeWhere 
@@ -345,24 +404,34 @@ type ExpressionToSql =
             separator 
             (Hlp.cneToFun customNameExtractor) 
             (Hlp.cpvmToFun customParameterValueMap)
+            (Hlp.iicgToOptFun itemInCollGenerator)
             conditions 
 
     ///single F# quotation - this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters
     static member Translate(quoter, conditions, ?includeWhere, ?customNameExtractor) =
         ExpressionToSqlImpl.translateFsSingle 
-            quoter conditions includeWhere customNameExtractor None
+            quoter conditions includeWhere customNameExtractor None None
 
-    ///single F# quotation - full
+    ///single F# quotation - this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters
     static member Translate(quoter, conditions, includeWhere, customNameExtractor, customParameterValueMap) =
         ExpressionToSqlImpl.translateFsSingle 
-            quoter conditions includeWhere customNameExtractor customParameterValueMap
+            quoter conditions includeWhere customNameExtractor customParameterValueMap None
+
+    ///single F# quotation - full
+    static member Translate(quoter, conditions, includeWhere, customNameExtractor, customParameterValueMap, itemInCollGenerator) =
+        ExpressionToSqlImpl.translateFsSingle 
+            quoter conditions includeWhere customNameExtractor customParameterValueMap itemInCollGenerator
 
     ///multiple F# quotation - this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters
     static member Translate(quoter, separator, conditions, ?includeWhere, ?customNameExtractor) =
-        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere customNameExtractor None
+        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere customNameExtractor None None
+
+    ///multiple F# quotation - this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters
+    static member Translate(quoter, separator, conditions, includeWhere, customNameExtractor, customParameterValueMap) =
+        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere customNameExtractor customParameterValueMap None
 
     ///multiple F# quotations - full
-    static member Translate(quoter, separator, conditions, includeWhere, customNameExtractor, customParameterValueMap) =
-        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere customNameExtractor customParameterValueMap
+    static member Translate(quoter, separator, conditions, includeWhere, customNameExtractor, customParameterValueMap, itemInCollGenerator) =
+        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere customNameExtractor customParameterValueMap itemInCollGenerator
 
     static member AsFsFunc (x:Func<_,_>) = fun y -> x.Invoke(y)
