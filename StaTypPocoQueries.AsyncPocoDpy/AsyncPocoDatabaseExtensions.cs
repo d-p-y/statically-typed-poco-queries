@@ -124,6 +124,26 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
         }
 
+        public static Task<List<T>> FetchAsync<T>(
+                this Database self, Translator.ConjunctionWord wrd, params Expression<Func<T, bool>>[] queries) {
+
+            var dialect = GetDialect(self);
+            var translated = ExpressionToSql.Translate(
+                dialect.Quoter, wrd, queries, true, ExtractAsyncPocoColumnName,
+                ExtractCustomParameterValueMap(), self.BuildItemInCollectionImpl(dialect));
+            return self.FetchAsync<T>(translated.Item1, translated.Item2);
+        }
+
+        public static Task<List<T>> FetchAsync<T>(
+                this Database self, Translator.ConjunctionWord wrd, params FSharpExpr<FSharpFunc<T, bool>>[] queries) {
+
+            var dialect = GetDialect(self);
+            var translated = ExpressionToSql.Translate(
+                dialect.Quoter, wrd, queries, true, ExtractAsyncPocoColumnNameFs,
+                ExtractCustomParameterValueMapFs, self.BuildItemInCollectionImplFs(dialect));
+            return self.FetchAsync<T>(translated.Item1, translated.Item2);
+        }
+
         public static Task<T> FirstAsync<T>(this Database self, Expression<Func<T, bool>> query) {
             var dialect = GetDialect(self);
             var translated = ExpressionToSql.Translate(
