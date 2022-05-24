@@ -33,6 +33,24 @@ namespace StaTypPocoQueries.Core.CsTests {
         [Column("thisOneIsTheProperName")]
         public string ActualColumnNameIsInAttribute { get; set; }
     }
+
+    public abstract class ParentEntityWithoutColumnAttr {
+        public virtual int Id { get; set; }
+    }
+    
+    public class ChildEntityWithCollumnAttr : ParentEntityWithoutColumnAttr {
+        [Column("OverridenEntityPropertyName")]
+        public override int Id { get; set; }
+    }
+    
+    public abstract class ParentEntityWithColumnAttr {
+        [Column("OverridenEntityPropertyName")]
+        public virtual int Id { get; set; }
+    }
+    
+    public class ChildEntityWithoutColumnAttr : ParentEntityWithColumnAttr {
+        public override int Id { get; set; }
+    }
     
     public class TestQuoter : Translator.IQuoter {
         public static Translator.IQuoter Instance => new TestQuoter();
@@ -300,9 +318,31 @@ namespace StaTypPocoQueries.Core.CsTests {
                     TestQuoter.Instance,
                     x => x.ActualColumnNameIsInAttribute == "foo",
                     true, 
-                    x => x.GetCustomAttribute<ColumnAttribute>()?.Name ?? x.Name));
+                    (x,_) => x.GetCustomAttribute<ColumnAttribute>()?.Name ?? x.Name));
         }
-
+        
+        [Fact]
+        public void VirtualPropertiesIssue10UsesChildColumnAttribute() {
+            AreEqual("WHERE <OverridenEntityPropertyName> = @0", 
+                new object[] { 123 },
+                ExpressionToSql.Translate<ChildEntityWithCollumnAttr>(
+                    TestQuoter.Instance,
+                    x => x.Id == 123,
+                    true,
+                    (mi, t) => t.GetProperty(mi.Name)?.GetCustomAttribute<ColumnAttribute>()?.Name ?? mi.GetCustomAttribute<ColumnAttribute>()?.Name ));
+        }
+        
+        [Fact]
+        public void VirtualPropertiesIssue10UsesParentColumnAttribute() {
+            AreEqual("WHERE <OverridenEntityPropertyName> = @0", 
+                new object[] { 123 },
+                ExpressionToSql.Translate<ChildEntityWithoutColumnAttr>(
+                    TestQuoter.Instance,
+                    x => x.Id == 123,
+                    true,
+                    (mi, t) => t.GetProperty(mi.Name)?.GetCustomAttribute<ColumnAttribute>()?.Name ?? mi.GetCustomAttribute<ColumnAttribute>()?.Name ));
+        }
+        
         [Fact]
         public void ChecksMemberAccessOwnerOrigin() {
             //issue #7

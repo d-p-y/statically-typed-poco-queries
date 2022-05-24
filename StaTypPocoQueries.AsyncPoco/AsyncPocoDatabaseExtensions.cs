@@ -38,15 +38,15 @@ namespace StaTypPocoQueries.AsyncPoco {
             throw new Exception($"unsupported dialect for db: {type}");
         }
 
-        private static string ExtractAsyncPocoColumnName(MemberInfo x) =>
+        private static string ExtractAsyncPocoColumnName(MemberInfo x, Type t) =>
             x.GetCustomAttribute<AP.ColumnAttribute>()?.Name ?? x.Name;
 
-        private static FSharpOption<FSharpFunc<MemberInfo, string>> ExtractAsyncPocoColumnNameFsFunc() {
-            return FSharpOption<FSharpFunc<MemberInfo, string>>.Some(
-                ExpressionToSql.AsFsFunc<MemberInfo,string>(
+        private static FSharpOption<FSharpFunc<MemberInfo, FSharpFunc<Type,string>>> ExtractAsyncPocoColumnNameFsFunc() {
+            return FSharpOption<FSharpFunc<MemberInfo, FSharpFunc<Type,string>>>.Some(
+                ExpressionToSql.AsFsFunc3<MemberInfo,Type,string>(
                     ExtractAsyncPocoColumnName));
         }
-        private static readonly FSharpOption<FSharpFunc<MemberInfo, string>> ExtractAsyncPocoColumnNameFs = ExtractAsyncPocoColumnNameFsFunc();
+        private static readonly FSharpOption<FSharpFunc<MemberInfo, FSharpFunc<Type,string>>> ExtractAsyncPocoColumnNameFs = ExtractAsyncPocoColumnNameFsFunc();
 
         public static Task<int> DeleteAsync<T>(this AP.Database self, Expression<Func<T, bool>> query) {
             var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);

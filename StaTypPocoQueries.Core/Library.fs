@@ -105,7 +105,7 @@ module Translator =
                 | :? System.Reflection.PropertyInfo as pi -> 
                     {
                         LiteralType.IsNull = false
-                        SqlProduce = (fun _ -> quote.QuoteColumn (nameExtractor body.Member))
+                        SqlProduce = (fun _ -> quote.QuoteColumn (nameExtractor body.Member body.Expression.Type))
                         Param = None
                         Prop = Some (pi)
                     }
@@ -299,10 +299,10 @@ module Hlp =
 
         where + query, prms |> List.rev |> Array.ofList
 
-    let cneToFun (customNameExtractor:Func<System.Reflection.MemberInfo,string>) = 
+    let cneToFun (customNameExtractor:Func<System.Reflection.MemberInfo,System.Type,string>) = 
         if customNameExtractor = null 
-        then (fun (x:System.Reflection.MemberInfo) -> x.Name) 
-        else (fun x -> customNameExtractor.Invoke x)
+        then (fun (x:System.Reflection.MemberInfo) (_:System.Type)  -> x.Name) 
+        else (fun mi t -> customNameExtractor.Invoke(mi, t))
     
     let cpvmToFun (customParameterValueMap:Func<System.Reflection.PropertyInfo,obj,obj>) =
         if customParameterValueMap = null
@@ -331,7 +331,7 @@ module ExpressionToSqlImpl =
             customParameterValueMap 
             itemInCollGenerator =
 
-        let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) -> x.Name)
+        let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) (_:System.Type) -> x.Name)
         let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
 
         Hlp.translateOne quoter 
@@ -350,7 +350,7 @@ module ExpressionToSqlImpl =
             customParameterValueMap 
             itemInCollGenerator =
                 
-        let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) -> x.Name)        
+        let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) (_:System.Type) -> x.Name)        
         let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
 
         let includeWhere = 
@@ -373,7 +373,7 @@ type ExpressionToSql =
     ///single Linq expression
     static member Translate<'T>(quoter, conditions:Expression<Func<'T, bool>>, 
             [<Optional; DefaultParameterValue(true)>]includeWhere, 
-            [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,string>)>]
+            [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,System.Type,string>)>]
                 customNameExtractor,
             [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,obj,obj>)>] 
                 customParameterValueMap,
@@ -391,7 +391,7 @@ type ExpressionToSql =
     static member Translate<'T>(quoter:Translator.IQuoter, separator:Translator.ConjunctionWord, 
             conditions:Expression<Func<'T, bool>>[],
             [<Optional; DefaultParameterValue(true)>]includeWhere, 
-            [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,string>)>]
+            [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,System.Type,string>)>]
                 customNameExtractor,
             [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,obj,obj>)>] 
                 customParameterValueMap,
@@ -435,3 +435,4 @@ type ExpressionToSql =
         ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere customNameExtractor customParameterValueMap itemInCollGenerator
 
     static member AsFsFunc (x:Func<_,_>) = fun y -> x.Invoke(y)
+    static member AsFsFunc3 (x:Func<_,_,_>) = fun y z -> x.Invoke(y, z)

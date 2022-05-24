@@ -38,12 +38,12 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
             throw new Exception($"unsupported dialect for db: {type}");
         }
 
-        public static string ExtractAsyncPocoColumnName(MemberInfo x) =>
+        public static string ExtractAsyncPocoColumnName(MemberInfo x, Type t) =>
             x.GetCustomAttribute<AsyncPoco.ColumnAttribute>()?.Name ?? x.Name;
         
-        public static readonly FSharpOption<FSharpFunc<MemberInfo, string>> ExtractAsyncPocoColumnNameFs = 
-            FSharpOption<FSharpFunc<MemberInfo, string>>.Some(
-                ExpressionToSql.AsFsFunc<MemberInfo, string>(
+        public static readonly FSharpOption<FSharpFunc<MemberInfo, FSharpFunc<Type, string>>> ExtractAsyncPocoColumnNameFs = 
+            FSharpOption<FSharpFunc<MemberInfo, FSharpFunc<Type, string>>>.Some(
+                ExpressionToSql.AsFsFunc3<MemberInfo, Type, string>(
                     ExtractAsyncPocoColumnName));
 
         public static Translator.ItemInCollectionImpl BuildItemInCollectionImpl(this Database self, Translator.SqlDialect dialect) {
