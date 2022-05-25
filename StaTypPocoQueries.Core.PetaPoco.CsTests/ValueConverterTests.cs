@@ -130,7 +130,7 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
 
             //no need to call converter manually
             var (query,prms) = 
-                ExpressionToSql.Translate<SomeEntity>(
+                ExpressionToSqlV2.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => x.ABool == v,
                     customParameterValueMap:InvokePetaPocoConverterIfAny);
@@ -151,11 +151,10 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
             _pp.Insert(new SomeEntity { ABool = false, AString = "test" });
 
             var someInstance = new SomeEntity { ABool = true};
-            var v = (bool?)true;
-
+            
             //no need to call converter manually
             var (query, prms) =
-                ExpressionToSql.Translate<SomeEntity>(
+                ExpressionToSqlV2.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => x.ABool == someInstance.ABool,
                     customParameterValueMap: InvokePetaPocoConverterIfAny);
@@ -179,7 +178,7 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
 
             //no need to call converter manually
             var (query, prms) =
-                ExpressionToSql.Translate<SomeEntity>(
+                ExpressionToSqlV2.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => v == x.ABool,
                     customParameterValueMap: InvokePetaPocoConverterIfAny);
@@ -204,7 +203,7 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
 
             //no need to call converter manually
             var (query, prms) =
-                ExpressionToSql.Translate<SomeEntity>(
+                ExpressionToSqlV2.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => x.OtherBool == x.ABool,
                     customParameterValueMap: InvokePetaPocoConverterIfAny);
@@ -230,7 +229,7 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
 
             //no need to call converter manually
             var (query, prms) =
-                ExpressionToSql.Translate<SomeEntity>(
+                ExpressionToSqlV2.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => v1 == v2,
                     customParameterValueMap: InvokePetaPocoConverterIfAny);
