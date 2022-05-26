@@ -299,11 +299,6 @@ module Hlp =
 
         where + query, prms |> List.rev |> Array.ofList
 
-    let oldCneToFun (customNameExtractor:Func<System.Reflection.MemberInfo,string>) = 
-        if customNameExtractor = null 
-        then (fun (x:System.Reflection.MemberInfo) (_:System.Type)  -> x.Name) 
-        else (fun mi _ -> customNameExtractor.Invoke(mi))
-    
     let cneToFun (customNameExtractor:Func<System.Reflection.MemberInfo,System.Type,string>) = 
         if customNameExtractor = null 
         then (fun (x:System.Reflection.MemberInfo) (_:System.Type)  -> x.Name) 
@@ -327,12 +322,6 @@ module Hlp =
                 (itemInCollGenerator:Translator.ItemInCollectionImpl).Invoke(itm, coll)) |> Some
         |_ -> None
         
-    let addTypeParam f =
-        match f with
-        |None -> None
-        |Some (f:System.Reflection.MemberInfo->string) ->
-            Some (fun (mi:System.Reflection.MemberInfo) (_:System.Type) -> f mi)
-
 module ExpressionToSqlImpl =
     let translateFsSingle<'T>
             quoter
@@ -381,75 +370,24 @@ module ExpressionToSqlImpl =
             
 type ExpressionToSql =
    
-    [<Obsolete("limited customerNameExtractor that doesn't cover virtual properties cases properly. Use ExpressionToSqlV2.Translate() instead")>]
-    static member Translate<'T>(quoter, conditions:Expression<Func<'T, bool>>, 
-            [<Optional; DefaultParameterValue(true)>]includeWhere, 
-            [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,string>)>]
-                oldCustomNameExtractor,
-            [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,obj,obj>)>] 
-                customParameterValueMap,
-            [<Optional; DefaultParameterValue(null:Translator.ItemInCollectionImpl)>] 
-                itemInCollGenerator) =
-        
-        Hlp.translateOne quoter 
-            (Hlp.oldCneToFun oldCustomNameExtractor)
-            (Hlp.cpvmToFun customParameterValueMap)
-            (Hlp.iicgToOptFun itemInCollGenerator)
-            conditions
-            includeWhere 
-
-    [<Obsolete("limited customerNameExtractor that doesn't cover virtual properties cases properly. Use ExpressionToSqlV2.Translate() instead")>]
-    static member Translate<'T>(quoter:Translator.IQuoter, separator:Translator.ConjunctionWord, 
-            conditions:Expression<Func<'T, bool>>[],
-            [<Optional; DefaultParameterValue(true)>]includeWhere, 
-            [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,string>)>]
-                customNameExtractor,
-            [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,obj,obj>)>] 
-                customParameterValueMap,
-            [<Optional; DefaultParameterValue(null:Translator.ItemInCollectionImpl)>] 
-                itemInCollGenerator) = 
-        
-        Hlp.translateMultiple 
-            includeWhere 
-            quoter 
-            separator 
-            (Hlp.oldCneToFun customNameExtractor) 
-            (Hlp.cpvmToFun customParameterValueMap)
-            (Hlp.iicgToOptFun itemInCollGenerator)
-            conditions
-            
-    [<Obsolete("limited customerNameExtractor that doesn't cover virtual properties cases properly AND this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters. Use ExpressionToSqlV2.Translate() instead")>]
+    [<Obsolete("this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters")>]
     static member Translate(quoter, conditions, ?includeWhere, ?customNameExtractor) =
         ExpressionToSqlImpl.translateFsSingle 
-            quoter conditions includeWhere (Hlp.addTypeParam customNameExtractor) None None
+            quoter conditions includeWhere customNameExtractor None None
 
-    [<Obsolete("limited customerNameExtractor that doesn't cover virtual properties cases properly AND this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters. Use ExpressionToSqlV2.Translate() instead")>]
+    [<Obsolete("this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters")>]
     static member Translate(quoter, conditions, includeWhere, customNameExtractor, customParameterValueMap) =
         ExpressionToSqlImpl.translateFsSingle 
-            quoter conditions includeWhere (Hlp.addTypeParam customNameExtractor) customParameterValueMap None
+            quoter conditions includeWhere customNameExtractor customParameterValueMap None
 
-    [<Obsolete("limited customerNameExtractor that doesn't cover virtual properties cases properly. Use ExpressionToSqlV2.Translate() instead")>]
-    static member Translate(quoter, conditions, includeWhere, customNameExtractor, customParameterValueMap, itemInCollGenerator) =
-        ExpressionToSqlImpl.translateFsSingle 
-            quoter conditions includeWhere (Hlp.addTypeParam customNameExtractor) customParameterValueMap itemInCollGenerator
-
-    [<Obsolete("limited customerNameExtractor that doesn't cover virtual properties cases properly AND this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters. Use ExpressionToSqlV2.Translate() instead")>]
+    [<Obsolete("this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters")>]
     static member Translate(quoter, separator, conditions, ?includeWhere, ?customNameExtractor) =
-        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere (Hlp.addTypeParam customNameExtractor) None None
+        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere customNameExtractor None None
 
-    [<Obsolete("limited customerNameExtractor that doesn't cover virtual properties cases properly AND this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters. Use ExpressionToSqlV2.Translate() instead")>]
+    [<Obsolete("this overload doesn't expose all parameters due to ambiguous overload resolution issues caused by optional parameters")>]
     static member Translate(quoter, separator, conditions, includeWhere, customNameExtractor, customParameterValueMap) =
-        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere (Hlp.addTypeParam customNameExtractor) customParameterValueMap None
+        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere customNameExtractor customParameterValueMap None
 
-    [<Obsolete("limited customerNameExtractor that doesn't cover virtual properties cases properly. Use ExpressionToSqlV2.Translate() instead")>]
-    static member Translate(quoter, separator, conditions, includeWhere, customNameExtractor, customParameterValueMap, itemInCollGenerator) =
-        ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere (Hlp.addTypeParam customNameExtractor) customParameterValueMap itemInCollGenerator
-
-    static member AsFsFunc (x:Func<_,_>) = fun y -> x.Invoke(y)
-    static member AsFsFunc3 (x:Func<_,_,_>) = fun y z -> x.Invoke(y, z)
-
-type ExpressionToSqlV2 =
-    
     ///single Linq expression
     static member Translate<'T>(quoter, conditions:Expression<Func<'T, bool>>, 
             [<Optional; DefaultParameterValue(true)>]includeWhere, 
@@ -495,3 +433,6 @@ type ExpressionToSqlV2 =
     ///multiple F# quotations - full
     static member Translate(quoter, separator, conditions, includeWhere, customNameExtractor, customParameterValueMap, itemInCollGenerator) =
         ExpressionToSqlImpl.translateFsMultiple quoter separator conditions includeWhere customNameExtractor customParameterValueMap itemInCollGenerator
+
+    static member AsFsFunc (x:Func<_,_>) = fun y -> x.Invoke(y)
+    static member AsFsFunc3 (x:Func<_,_,_>) = fun y z -> x.Invoke(y, z)
