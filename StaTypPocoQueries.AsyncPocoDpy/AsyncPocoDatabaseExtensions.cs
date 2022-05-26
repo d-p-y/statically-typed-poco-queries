@@ -78,7 +78,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
 
         public static Task<int> DeleteAsync<T>(this Database self, Expression<Func<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnName /*won't be used*/, 
                 ExtractCustomParameterValueMap(), self.BuildItemInCollectionImpl(dialect));
             return self.DeleteAsync<T>(translated.Item1, translated.Item2);
@@ -86,7 +86,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
         
         public static Task<int> DeleteAsync<T>(this Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnNameFs /*won't be used*/,
                 ExtractCustomParameterValueMapFs, self.BuildItemInCollectionImplFs(dialect));
             return self.DeleteAsync<T>(translated.Item1, translated.Item2);
@@ -94,7 +94,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
 
         public static Task<bool> ExistsAsync<T>(this Database self, Expression<Func<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, false, ExtractAsyncPocoColumnName, 
                 ExtractCustomParameterValueMap(), self.BuildItemInCollectionImpl(dialect));
             return self.ExistsAsync<T>(translated.Item1, translated.Item2);
@@ -102,7 +102,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
         
         public static Task<bool> ExistsAsync<T>(this Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, false, ExtractAsyncPocoColumnNameFs,
                 ExtractCustomParameterValueMapFs, self.BuildItemInCollectionImplFs(dialect));
             return self.ExistsAsync<T>(translated.Item1, translated.Item2);
@@ -110,7 +110,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
 
         public static Task<List<T>> FetchAsync<T>(this Database self, Expression<Func<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnName, 
                 ExtractCustomParameterValueMap(), self.BuildItemInCollectionImpl(dialect));
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
@@ -118,7 +118,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
         
         public static Task<List<T>> FetchAsync<T>(this Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnNameFs,
                 ExtractCustomParameterValueMapFs, self.BuildItemInCollectionImplFs(dialect));
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
@@ -128,7 +128,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
                 this Database self, Translator.ConjunctionWord wrd, params Expression<Func<T, bool>>[] queries) {
 
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, wrd, queries, true, ExtractAsyncPocoColumnName,
                 ExtractCustomParameterValueMap(), self.BuildItemInCollectionImpl(dialect));
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
@@ -138,7 +138,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
                 this Database self, Translator.ConjunctionWord wrd, params FSharpExpr<FSharpFunc<T, bool>>[] queries) {
 
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, wrd, queries, true, ExtractAsyncPocoColumnNameFs,
                 ExtractCustomParameterValueMapFs, self.BuildItemInCollectionImplFs(dialect));
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
@@ -146,7 +146,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
 
         public static Task<T> FirstAsync<T>(this Database self, Expression<Func<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnName, 
                 ExtractCustomParameterValueMap(), self.BuildItemInCollectionImpl(dialect));
             return self.FirstAsync<T>(translated.Item1, translated.Item2);
@@ -154,7 +154,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
         
         public static Task<T> FirstAsync<T>(this Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnNameFs,
                 ExtractCustomParameterValueMapFs, self.BuildItemInCollectionImplFs(dialect));
             return self.FirstAsync<T>(translated.Item1, translated.Item2);
@@ -162,7 +162,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
 
         public static Task<T> SingleAsync<T>(this Database self, Expression<Func<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnName,
                 ExtractCustomParameterValueMap(), self.BuildItemInCollectionImpl(dialect));
             return self.SingleAsync<T>(translated.Item1, translated.Item2);
@@ -170,7 +170,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
         
         public static Task<T> SingleAsync<T>(this Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnNameFs,
                 ExtractCustomParameterValueMapFs, self.BuildItemInCollectionImplFs(dialect));
             return self.SingleAsync<T>(translated.Item1, translated.Item2);
@@ -178,7 +178,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
 
         public static Task<int> UpdateAsync<T>(this Database self, Expression<Func<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnName /*won't be used*/,
                 ExtractCustomParameterValueMap(), self.BuildItemInCollectionImpl(dialect));
             return self.UpdateAsync<int>(translated.Item1, translated.Item2);
@@ -186,7 +186,7 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
         
         public static Task<int> UpdateAsync<T>(this Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
             var dialect = GetDialect(self);
-            var translated = ExpressionToSqlV2.Translate(
+            var translated = ExpressionToSql.Translate(
                 dialect.Quoter, query, true, ExtractAsyncPocoColumnNameFs /*won't be used*/,
                 ExtractCustomParameterValueMapFs, self.BuildItemInCollectionImplFs(dialect));
             return self.UpdateAsync<int>(translated.Item1, translated.Item2);

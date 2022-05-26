@@ -16,7 +16,7 @@ type Tests() =
     let ``test constants only`` () =
         let s = "abc"
         let query, parms = 
-            ExpressionToSqlV2.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> 5 = 6 @>, None, None, None, None)
+            ExpressionToSql.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> 5 = 6 @>, None, None, None, None)
 
         Assert.Equal("WHERE @0 = @1", query)
         Assert.Equal([5 :> obj; 6 :> obj], parms)
@@ -25,7 +25,7 @@ type Tests() =
     let ``test single equals notnull quotation`` () =
         let s = "abc"
         let query, parms = 
-            ExpressionToSqlV2.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> x.SomeInt = 5 && x.SomeStr = s @>, None, None, None, None)
+            ExpressionToSql.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> x.SomeInt = 5 && x.SomeStr = s @>, None, None, None, None)
 
         Assert.Equal("WHERE <SomeInt> = @0 AND <SomeStr> = @1", query)
         Assert.Equal([5 :> obj; "abc" :> obj], parms)
@@ -34,7 +34,7 @@ type Tests() =
     let ``test item in array`` () =
         let arrItems = [| 11; 4; 8|]
         let query, parms =
-            ExpressionToSqlV2.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> arrItems.Contains x.SomeInt @>, Some true, None, None, itemInColl)
+            ExpressionToSql.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> arrItems.Contains x.SomeInt @>, Some true, None, None, itemInColl)
 
         Assert.Equal("WHERE <SomeInt> is_in_coll @0", query)
         Assert.Equal([arrItems :> obj], parms)
@@ -43,7 +43,7 @@ type Tests() =
     let ``test multiple quotations`` () =
         let s = "abc"
         let query, parms = 
-            ExpressionToSqlV2.Translate<SomeEntity>(quoter, Translator.ConjunctionWord.Or, 
+            ExpressionToSql.Translate<SomeEntity>(quoter, Translator.ConjunctionWord.Or, 
                 [| 
                     <@ fun (x:SomeEntity) -> x.SomeInt = 5 && x.SomeStr = s @> 
                     <@ fun (x:SomeEntity) -> x.SomeInt = 15@> 
@@ -57,13 +57,13 @@ type Tests() =
         //issue #7
         let s = SomeEntity(SomeStr="123")
         let query, parms = 
-            ExpressionToSqlV2.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> x.SomeStr = s.SomeStr @>, None, None, None, None)
+            ExpressionToSql.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> x.SomeStr = s.SomeStr @>, None, None, None, None)
 
         Assert.Equal("WHERE <SomeStr> = @0", query)
         Assert.Equal(["123" :> obj], parms)
 
         let query, parms = 
-            ExpressionToSqlV2.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> s.SomeStr = x.SomeStr @>, None, None, None, None)
+            ExpressionToSql.Translate<SomeEntity>(quoter, <@ fun (x:SomeEntity) -> s.SomeStr = x.SomeStr @>, None, None, None, None)
 
         Assert.Equal("WHERE @0 = <SomeStr>", query)
         Assert.Equal(["123" :> obj], parms)

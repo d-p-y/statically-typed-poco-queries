@@ -49,34 +49,34 @@ namespace StaTypPocoQueries.AsyncPoco {
         private static readonly FSharpOption<FSharpFunc<MemberInfo, FSharpFunc<Type,string>>> ExtractAsyncPocoColumnNameFs = ExtractAsyncPocoColumnNameFsFunc();
 
         public static Task<int> DeleteAsync<T>(this AP.Database self, Expression<Func<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
             return self.DeleteAsync<T>(translated.Item1, translated.Item2);
         }
         
         public static Task<int> DeleteAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs, 
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs, 
                 FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<object, object>>>.None, FSharpOption<Translator.ItemInCollectionImpl>.None);
             return self.DeleteAsync<T>(translated.Item1, translated.Item2);
         }
 
         public static Task<bool> ExistsAsync<T>(this AP.Database self, Expression<Func<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, false, ExtractAsyncPocoColumnName);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, false, ExtractAsyncPocoColumnName);
             return self.ExistsAsync<T>(translated.Item1, translated.Item2);
         }
         
         public static Task<bool> ExistsAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, false, ExtractAsyncPocoColumnNameFs,
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, false, ExtractAsyncPocoColumnNameFs,
                 FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<object, object>>>.None, FSharpOption<Translator.ItemInCollectionImpl>.None);
             return self.ExistsAsync<T>(translated.Item1, translated.Item2);
         }
 
         public static Task<List<T>> FetchAsync<T>(this AP.Database self, Expression<Func<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
         }
         
         public static Task<List<T>> FetchAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs,
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs,
                 FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<object, object>>>.None, FSharpOption<Translator.ItemInCollectionImpl>.None);
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
         }
@@ -84,47 +84,47 @@ namespace StaTypPocoQueries.AsyncPoco {
         public static Task<List<T>> FetchAsync<T>(
                 this AP.Database self, Translator.ConjunctionWord wrd, params Expression<Func<T, bool>>[] queries) {
             
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, wrd, queries, true, ExtractAsyncPocoColumnName);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, wrd, queries, true, ExtractAsyncPocoColumnName);
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
         }
         
         public static Task<List<T>> FetchAsync<T>(
                 this AP.Database self, Translator.ConjunctionWord wrd, params FSharpExpr<FSharpFunc<T, bool>>[] queries) {
             
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, wrd, queries, true, ExtractAsyncPocoColumnNameFs,
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, wrd, queries, true, ExtractAsyncPocoColumnNameFs,
                 FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<object, object>>>.None, FSharpOption<Translator.ItemInCollectionImpl>.None);
             return self.FetchAsync<T>(translated.Item1, translated.Item2);
         }
         
         public static Task<T> FirstAsync<T>(this AP.Database self, Expression<Func<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
             return self.FirstAsync<T>(translated.Item1, translated.Item2);
         }
         
         public static Task<T> FirstAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs,
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs,
                 FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<object, object>>>.None, FSharpOption<Translator.ItemInCollectionImpl>.None);
             return self.FirstAsync<T>(translated.Item1, translated.Item2);
         }
 
         public static Task<T> SingleAsync<T>(this AP.Database self, Expression<Func<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
             return self.SingleAsync<T>(translated.Item1, translated.Item2);
         }
         
         public static Task<T> SingleAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs,
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs,
                 FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<object, object>>>.None, FSharpOption<Translator.ItemInCollectionImpl>.None);
             return self.SingleAsync<T>(translated.Item1, translated.Item2);
         }
 
         public static Task<int> UpdateAsync<T>(this AP.Database self, Expression<Func<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnName);
             return self.UpdateAsync<int>(translated.Item1, translated.Item2);
         }
         
         public static Task<int> UpdateAsync<T>(this AP.Database self, FSharpExpr<FSharpFunc<T, bool>> query) {
-            var translated = ExpressionToSqlV2.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs,
+            var translated = ExpressionToSql.Translate(GetDialect(self).Quoter, query, true, ExtractAsyncPocoColumnNameFs,
                 FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<object, object>>>.None, FSharpOption<Translator.ItemInCollectionImpl>.None);
             return self.UpdateAsync<int>(translated.Item1, translated.Item2);
         }

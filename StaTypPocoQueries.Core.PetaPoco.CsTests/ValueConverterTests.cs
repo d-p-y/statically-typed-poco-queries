@@ -130,7 +130,7 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
 
             //no need to call converter manually
             var (query,prms) = 
-                ExpressionToSqlV2.Translate<SomeEntity>(
+                ExpressionToSql.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => x.ABool == v,
                     customParameterValueMap:InvokePetaPocoConverterIfAny);
@@ -154,7 +154,7 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
             
             //no need to call converter manually
             var (query, prms) =
-                ExpressionToSqlV2.Translate<SomeEntity>(
+                ExpressionToSql.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => x.ABool == someInstance.ABool,
                     customParameterValueMap: InvokePetaPocoConverterIfAny);
@@ -178,7 +178,7 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
 
             //no need to call converter manually
             var (query, prms) =
-                ExpressionToSqlV2.Translate<SomeEntity>(
+                ExpressionToSql.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => v == x.ABool,
                     customParameterValueMap: InvokePetaPocoConverterIfAny);
@@ -203,7 +203,7 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
 
             //no need to call converter manually
             var (query, prms) =
-                ExpressionToSqlV2.Translate<SomeEntity>(
+                ExpressionToSql.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => x.OtherBool == x.ABool,
                     customParameterValueMap: InvokePetaPocoConverterIfAny);
@@ -229,7 +229,7 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
 
             //no need to call converter manually
             var (query, prms) =
-                ExpressionToSqlV2.Translate<SomeEntity>(
+                ExpressionToSql.Translate<SomeEntity>(
                     Translator.SqlDialect.Sqlite.Quoter,
                     x => v1 == v2,
                     customParameterValueMap: InvokePetaPocoConverterIfAny);
