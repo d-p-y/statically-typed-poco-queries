@@ -54,7 +54,7 @@ module Translator =
         IsNull : bool
         SqlProduce : SqlParams->string
         Param : obj option
-        Prop : System.Reflection.PropertyInfo option
+        PropAndType : (System.Reflection.PropertyInfo * System.Type) option
     }
     with
         member this.maybeMapParam mapper = 
@@ -74,12 +74,12 @@ module Translator =
             LiteralType.IsNull = true
             SqlProduce = (fun _ -> "NULL")
             Param = None 
-            Prop = None }
+            PropAndType = None }
         | _ -> {
             LiteralType.IsNull = false
             SqlProduce = (fun prms -> sprintf "@%i" prms.Length)
             Param = Some v
-            Prop = None }
+            PropAndType = None }
 
     let extractImmediateValue body =
         let unaryExpr = Expression.Convert(body, typeof<obj>)
@@ -107,7 +107,7 @@ module Translator =
                         LiteralType.IsNull = false
                         SqlProduce = (fun _ -> quote.QuoteColumn (nameExtractor body.Member body.Expression.Type))
                         Param = None
-                        Prop = Some (pi)
+                        PropAndType = Some (pi, body.Expression.Type)
                     }
                 | :? System.Reflection.FieldInfo ->
                     body |> extractImmediateValue |> literalToSql
@@ -124,13 +124,13 @@ module Translator =
         let right = constantOrMemberAccessValue quote nameExtractor body.Right
         
         let leftParamMap, rightParamMap =
-            match left.Prop, right.Prop with
+            match left.PropAndType, right.PropAndType with
             |None, None -> //two constants
                 None, None
             |Some _, Some _ -> //comparison is expressed between two columns
                 None, None
-            |Some x, _ ->  None, Some (paramValueMap x)
-            |None, Some x -> Some (paramValueMap x), None
+            |Some(pi,t), _ ->  None, Some (paramValueMap pi t)
+            |None, Some(pi,t) -> Some (paramValueMap pi t), None
 
         let left = left.maybeMapParam leftParamMap
         let right = right.maybeMapParam rightParamMap
@@ -304,10 +304,10 @@ module Hlp =
         then (fun (x:System.Reflection.MemberInfo) (_:System.Type)  -> x.Name) 
         else (fun mi t -> customNameExtractor.Invoke(mi, t))
     
-    let cpvmToFun (customParameterValueMap:Func<System.Reflection.PropertyInfo,obj,obj>) =
+    let cpvmToFun (customParameterValueMap:Func<System.Reflection.PropertyInfo,System.Type,obj,obj>) =
         if customParameterValueMap = null
-        then (fun _ x -> x)
-        else (fun pi inp -> customParameterValueMap.Invoke(pi,inp) )
+        then (fun _ _ x -> x)
+        else (fun pi t inp -> customParameterValueMap.Invoke(pi,t,inp) )
 
     let iicgToOptFun (itemInCollGenerator:Translator.ItemInCollectionImpl) =
         if itemInCollGenerator = null
@@ -332,7 +332,7 @@ module ExpressionToSqlImpl =
             itemInCollGenerator =
 
         let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) (_:System.Type) -> x.Name)
-        let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
+        let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ _ x -> x)
 
         Hlp.translateOne quoter 
             nameExtractor
@@ -351,7 +351,7 @@ module ExpressionToSqlImpl =
             itemInCollGenerator =
                 
         let nameExtractor = customNameExtractor |> Option.defaultValue (fun (x:System.Reflection.MemberInfo) (_:System.Type) -> x.Name)        
-        let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ x -> x)
+        let parameterValueMap = customParameterValueMap |> Option.defaultValue (fun _ _ x -> x)
 
         let includeWhere = 
             includeWhere
@@ -393,7 +393,7 @@ type ExpressionToSql =
             [<Optional; DefaultParameterValue(true)>]includeWhere, 
             [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,System.Type,string>)>]
                 customNameExtractor,
-            [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,obj,obj>)>] 
+            [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,System.Type,obj,obj>)>] 
                 customParameterValueMap,
             [<Optional; DefaultParameterValue(null:Translator.ItemInCollectionImpl)>] 
                 itemInCollGenerator) =
@@ -411,7 +411,7 @@ type ExpressionToSql =
             [<Optional; DefaultParameterValue(true)>]includeWhere, 
             [<Optional; DefaultParameterValue(null:Func<System.Reflection.MemberInfo,System.Type,string>)>]
                 customNameExtractor,
-            [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,obj,obj>)>] 
+            [<Optional; DefaultParameterValue(null:Func<System.Reflection.PropertyInfo,System.Type,obj,obj>)>] 
                 customParameterValueMap,
             [<Optional; DefaultParameterValue(null:Translator.ItemInCollectionImpl)>] 
                 itemInCollGenerator) = 

@@ -69,12 +69,12 @@ namespace StaTypPocoQueries.AsyncPocoDpy {
                 : FSharpOption<Translator.ItemInCollectionImpl>.Some(res);
         }
         
-        public static Func<PropertyInfo,object,object> ExtractCustomParameterValueMap() {
+        public static Func<PropertyInfo,Type,object,object> ExtractCustomParameterValueMap() {
             return null; //unsupported in AsyncPoco
         }
 
-        public static readonly FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<object, object>>> ExtractCustomParameterValueMapFs = 
-            FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<object, object>>>.None; //unsupported in AsyncPoco
+        public static readonly FSharpOption<FSharpFunc<PropertyInfo,FSharpFunc<Type,FSharpFunc<object, object>>>> ExtractCustomParameterValueMapFs = 
+            FSharpOption<FSharpFunc<PropertyInfo, FSharpFunc<Type,FSharpFunc<object, object>>>>.None; //unsupported in AsyncPoco
 
         public static Task<int> DeleteAsync<T>(this Database self, Expression<Func<T, bool>> query) {
             var dialect = GetDialect(self);

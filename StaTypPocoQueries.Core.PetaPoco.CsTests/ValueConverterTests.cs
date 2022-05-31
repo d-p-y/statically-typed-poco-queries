@@ -70,6 +70,34 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
             Id+AString.GetHashCode()+(ABool ?? true).GetHashCode() + (OtherBool ?? true).GetHashCode();
     }
 
+    abstract class SomeParent {
+        public  virtual bool? ABool { get; set; }
+    }
+
+    [PrimaryKey("Id")]
+    [TableName("SomeChild")]
+    class SomeChild : SomeParent {
+        [Column]
+        public int Id { get; set; }
+
+        [Column]
+        [NullableBoolAsString] 
+        public override bool? ABool { get; set; }
+        
+        public override bool Equals(object rawOther) {
+            if (!(rawOther is SomeChild)) {
+                return false;
+            }
+            var oth = (SomeChild)rawOther;
+            
+            return
+                oth.Id == Id &&
+                oth.ABool == ABool;
+        }
+
+        public override int GetHashCode() => Id+(ABool ?? true).GetHashCode();
+    }
+    
     public class ValueConverterTests : IDisposable {
         private readonly IDatabase _pp;
         private readonly SqliteConnection _db;
@@ -83,15 +111,24 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
             _db = new SqliteConnection("Data Source=:memory:");
             _db.Open();
 
-            var cmd = _db.CreateCommand();
-            cmd.CommandText = @"
-                create table SomeEntity (
-                    id integer primary key autoincrement not null,
-                    aBool varchar(5) not null,
-                    otherBool int null, 
-                    aString varchar(50) null )";
-            cmd.ExecuteNonQuery();
-
+            using (var cmd = _db.CreateCommand()) {
+                cmd.CommandText = @"
+                    create table SomeEntity (
+                        id integer primary key autoincrement not null,
+                        aBool varchar(5) not null,
+                        otherBool int null, 
+                        aString varchar(50) null )";
+                cmd.ExecuteNonQuery();
+            }
+            
+            using (var cmd = _db.CreateCommand()) {
+                cmd.CommandText = @"
+                    create table SomeChild (
+                        id integer primary key autoincrement not null,
+                        aBool varchar(5) not null)";
+                cmd.ExecuteNonQuery();
+            }
+            
             _pp = new Database(_db);
         }
         
@@ -113,12 +150,38 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
                 lst);
         }
 
-        static object InvokePetaPocoConverterIfAny(PropertyInfo pocoClassProperty, object toConvert) {
-            var maybeConverter = pocoClassProperty.GetCustomAttribute<ValueConverterAttribute>(true);
+        static object InvokePetaPocoConverterIfAny(PropertyInfo pocoClassProperty, Type t, object toConvert) {
+            var maybeConverter = 
+                (t.GetProperty(pocoClassProperty.Name) ?? pocoClassProperty)
+                    .GetCustomAttribute<ValueConverterAttribute>(true);
             
             return maybeConverter == null
                 ? toConvert
                 : maybeConverter.ConvertToDb(toConvert);
+        }
+
+        [Fact]
+        public void StaTypPocoGetsDataNeededToInvokeConverter() {
+            _pp.Insert(new SomeChild { ABool = null });
+            _pp.Insert(new SomeChild { ABool = true });
+            
+            var v = (bool?)true;
+
+            //no need to call converter manually
+            var (query,prms) = 
+                ExpressionToSql.Translate<SomeChild>(
+                    Translator.SqlDialect.Sqlite.Quoter,
+                    x => x.ABool == v,
+                    customParameterValueMap:InvokePetaPocoConverterIfAny);
+
+            Assert.Equal("WHERE `ABool` = @0", query);
+            Assert.Equal(new object[]{"true"}, prms);
+
+            var lst = _pp.Query<SomeChild>(query, prms).ToArray();
+            
+            Assert.Equal(
+                new[] { new SomeChild { ABool = true, Id = 2 } },
+                lst);
         }
 
         [Fact]
@@ -198,8 +261,6 @@ namespace StaTypPocoQueries.Core.PetaPoco.CsTests {
             //because evaluation of parameters is done by database
             _pp.Insert(new SomeEntity { ABool = true, AString = "hi" });
             _pp.Insert(new SomeEntity { ABool = false, AString = "test" });
-
-            var v = (bool?)false;
 
             //no need to call converter manually
             var (query, prms) =
