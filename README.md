@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> as of 2024-03-08 I'm not going to maintain this project anymore. I've moved on to [SogePoco](https://github.com/d-p-y/SogePoco)
+>
+
+---
+
 # Statically Typed Poco Queries
 
 # What is this?
